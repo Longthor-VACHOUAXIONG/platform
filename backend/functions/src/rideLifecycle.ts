@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from './firebaseAdmin';
 import { sendPushToTokens } from './rideMatching';
@@ -12,6 +12,18 @@ export const registerPushToken = onCall(async (request) => {
   if (!pushToken) throw new HttpsError('invalid-argument', 'pushToken is required.');
 
   await db.collection('drivers').doc(uid).update({ pushToken });
+  return { ok: true };
+});
+
+/** Rider registers their FCM push token for trip status updates. */
+export const registerRiderPushToken = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+  const { pushToken } = request.data as { pushToken: string };
+  if (!pushToken) throw new HttpsError('invalid-argument', 'pushToken is required.');
+
+  await db.collection('riders').doc(uid).update({ pushToken });
   return { ok: true };
 });
 

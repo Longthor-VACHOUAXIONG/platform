@@ -6,6 +6,7 @@ export {
   startTrip,
   completeTrip,
   registerPushToken,
+  registerRiderPushToken,
 } from './rideLifecycle';
 export { setAdminRole } from './admin';
 export { getRecommendedFare } from './pricing';

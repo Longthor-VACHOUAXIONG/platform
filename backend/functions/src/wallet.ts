@@ -208,8 +208,8 @@ export const initiateBcelTopUp = onCall(async (request) => {
  * payment, this credits the driver's wallet via the same helper the manual
  * approval flow uses.
  *
- * ⚠️ Signature verification below is a placeholder — replace with BCEL's
- * actual webhook-signing scheme before relying on this. Without real
+ * ⚠️ Signature verification below MUST be implemented before production.
+ * Replace with BCEL's actual webhook-signing scheme. Without real
  * verification, anyone who finds this URL could credit arbitrary wallets.
  */
 export const bcelWebhook = onRequest(async (req, res) => {
@@ -217,9 +217,21 @@ export const bcelWebhook = onRequest(async (req, res) => {
     const credsDoc = await db.collection('secureConfig').doc('bcel').get();
     const webhookSecret = credsDoc.data()?.webhookSecret;
 
-    // TODO: verify the request is genuinely from BCEL using their signing
-    // scheme (e.g. an HMAC header checked against `webhookSecret`) — do NOT
-    // deploy this to production without real verification here.
+    // IMPORTANT: Verify the request is genuinely from BCEL using their signing
+    // scheme (e.g. an HMAC header checked against `webhookSecret`).
+    // Example pattern (adjust to BCEL's actual spec):
+    //   const signature = req.headers['x-bcel-signature'] as string;
+    //   const crypto = require('crypto');
+    //   const expectedSig = crypto
+    //     .createHmac('sha256', webhookSecret)
+    //     .update(JSON.stringify(req.body))
+    //     .digest('hex');
+    //   if (signature !== expectedSig) {
+    //     res.status(401).send('Invalid signature');
+    //     return;
+    //   }
+    
+    // For now, fail if no secret is configured to prevent accidental use
     if (!webhookSecret) {
       res.status(503).send('BCEL webhook secret not configured');
       return;

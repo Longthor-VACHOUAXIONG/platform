@@ -1,0 +1,57 @@
+version: '3.8'
+
+# Self-hosted map stack: replaces Google Maps tiles, Directions API, and
+# Geocoding API with three open-source services running on your own VPS.
+#
+#   tileserver → raster map tiles (what the app draws as the background map)
+#   osrm       → turn-by-turn routing (real road distance/duration/route,
+#                same job the Directions API was doing)
+#   nominatim  → reverse geocoding (turning a lat/lng into a street address,
+#                same job expo-location's native geocoder was doing)
+#
+# All three are optional independently — if you only care about ditching the
+# Directions API bill, you could run just `osrm` and keep something else for
+# tiles. This compose file runs all three since you asked to fully replace
+# Google Maps.
+
+services:
+  tileserver:
+    image: overv/openstreetmap-tile-server:latest
+    container_name: gofair-tileserver
+    ports:
+      - '80:80'
+    volumes:
+      - osm-data:/data/database/
+      - ./data/laos-latest.osm.pbf:/data/region.osm.pbf:ro
+    environment:
+      - THREADS=4
+    restart: unless-stopped
+    command: run
+
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: gofair-osrm
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./data:/data
+    command: osrm-routed --algorithm mld /data/laos-latest.osrm
+    restart: unless-stopped
+
+  nominatim:
+    image: mediagis/nominatim:4.5
+    container_name: gofair-nominatim
+    ports:
+      - '8080:8080'
+    environment:
+      - PBF_URL=https://download.geofabrik.de/asia/laos-latest.osm.pbf
+      - REPLICATION_URL=https://download.geofabrik.de/asia/laos-updates/
+      - NOMINATIM_PASSWORD=changeme_nominatim_db_password
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    restart: unless-stopped
+    shm_size: 1gb
+
+volumes:
+  osm-data:
+  nominatim-data:

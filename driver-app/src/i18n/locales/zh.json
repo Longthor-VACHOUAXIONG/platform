@@ -1,0 +1,73 @@
+{
+  "common": {
+    "skip": "跳过",
+    "submit": "提交",
+    "back": "返回",
+    "cash": "现金",
+    "min": "分钟"
+  },
+  "auth": {
+    "signUpTagline": "注册后即可开始接收用车请求。",
+    "enterPhoneToStart": "请输入您的手机号码以开始。",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "发送验证码",
+    "enterCodeSentTo": "请输入发送至 {{phone}} 的6位验证码。",
+    "verify": "验证",
+    "almostDone": "快完成了 — 告诉我们您和您的车辆信息。",
+    "fullName": "姓名",
+    "fullNamePlaceholder": "例如：Silaxay",
+    "vehicleModel": "车辆型号",
+    "vehicleModelPlaceholder": "例如：Honda E NS1",
+    "plateNumber": "车牌号",
+    "plateNumberPlaceholder": "例如：AB 1234",
+    "finishSignUp": "完成注册",
+    "reviewNote": "您的账户将在您可以接单前经过审核，通常需要1-2天。",
+    "includeCountryCodeTitle": "请填写国家代码",
+    "includeCountryCodeBody": "例如：+856 20 5555 5555",
+    "couldNotSendCode": "验证码发送失败",
+    "checkNumberAndRetry": "请检查号码后重试。",
+    "incorrectCode": "验证码不正确",
+    "pleaseTryAgain": "请重试。",
+    "signUpFailed": "注册失败"
+  },
+  "home": {
+    "youreOnline": "您已上线",
+    "youreOffline": "您已下线",
+    "earnings": "收入",
+    "nearbyRequests": "附近的请求",
+    "waitingForRequests": "正在等待用车请求…",
+    "makeAnOffer": "报价",
+    "sendOffer": "发送报价",
+    "sending": "发送中…"
+  },
+  "tripAwaiting": {
+    "waitingForRider": "正在等待乘客选择司机…",
+    "autoUpdateNote": "您的报价已发送。本页面将自动更新。",
+    "backToRequests": "返回请求列表"
+  },
+  "tripInProgress": {
+    "riderFallback": "乘客",
+    "pickupLabel": "上车地点：{{label}}",
+    "dropoffLabel": "目的地：{{label}}",
+    "startTrip": "开始行程",
+    "starting": "正在开始…",
+    "completeTrip": "完成行程",
+    "completing": "正在完成…"
+  },
+  "rating": {
+    "rateYourRider": "为乘客评分",
+    "howWasThisTrip": "本次行程感觉如何？",
+    "commentPlaceholder": "留下评论（可选）"
+  },
+  "tripHistory": {
+    "title": "收入",
+    "totalFromTrips": "来自 {{count}} 次已完成行程的总收入",
+    "empty": "暂无已完成的行程。"
+  },
+  "settings": {
+    "language": "语言"
+  },
+  "chat": {
+    "messagePlaceholder": "输入消息…"
+  }
+}

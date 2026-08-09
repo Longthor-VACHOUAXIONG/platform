@@ -1,0 +1,73 @@
+{
+  "common": {
+    "skip": "ຂ້າມ",
+    "submit": "ສົ່ງ",
+    "back": "ກັບຄືນ",
+    "cash": "ເງິນສົດ",
+    "min": "ນາທີ"
+  },
+  "auth": {
+    "signUpTagline": "ລົງທະບຽນເພື່ອເລີ່ມຮັບຄຳຮ້ອງຂໍໂດຍສານ.",
+    "enterPhoneToStart": "ປ້ອນເບີໂທຂອງທ່ານເພື່ອເລີ່ມຕົ້ນ.",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "ສົ່ງລະຫັດ",
+    "enterCodeSentTo": "ປ້ອນລະຫັດ 6 ຕົວເລກທີ່ສົ່ງໄປຫາ {{phone}}.",
+    "verify": "ຢືນຢັນ",
+    "almostDone": "ໃກ້ຈະສຳເລັດແລ້ວ — ບອກພວກເຮົາກ່ຽວກັບທ່ານ ແລະ ພາຫະນະຂອງທ່ານ.",
+    "fullName": "ຊື່ເຕັມ",
+    "fullNamePlaceholder": "ຕົວຢ່າງ: ສີລະໄຊ",
+    "vehicleModel": "ຮຸ່ນລົດ",
+    "vehicleModelPlaceholder": "ຕົວຢ່າງ: Honda E NS1",
+    "plateNumber": "ປ້າຍທະບຽນ",
+    "plateNumberPlaceholder": "ຕົວຢ່າງ: AB 1234",
+    "finishSignUp": "ສຳເລັດການລົງທະບຽນ",
+    "reviewNote": "ບັນຊີຂອງທ່ານຈະຖືກກວດສອບກ່ອນທີ່ທ່ານຈະສາມາດຮັບຄິວໄດ້. ໂດຍປົກກະຕິໃຊ້ເວລາ 1-2 ວັນ.",
+    "includeCountryCodeTitle": "ກະລຸນາໃສ່ລະຫັດປະເທດ",
+    "includeCountryCodeBody": "ຕົວຢ່າງ: +856 20 5555 5555",
+    "couldNotSendCode": "ບໍ່ສາມາດສົ່ງລະຫັດໄດ້",
+    "checkNumberAndRetry": "ກະລຸນາກວດເບີໂທ ແລ້ວລອງໃໝ່.",
+    "incorrectCode": "ລະຫັດບໍ່ຖືກຕ້ອງ",
+    "pleaseTryAgain": "ກະລຸນາລອງໃໝ່.",
+    "signUpFailed": "ການລົງທະບຽນລົ້ມເຫຼວ"
+  },
+  "home": {
+    "youreOnline": "ທ່ານອອນລາຍຢູ່",
+    "youreOffline": "ທ່ານອອບລາຍຢູ່",
+    "earnings": "ລາຍໄດ້",
+    "nearbyRequests": "ຄຳຮ້ອງຂໍໃກ້ຄຽງ",
+    "waitingForRequests": "ກຳລັງລໍຖ້າຄຳຮ້ອງຂໍໂດຍສານ…",
+    "makeAnOffer": "ສະເໜີລາຄາ",
+    "sendOffer": "ສົ່ງຂໍ້ສະເໜີ",
+    "sending": "ກຳລັງສົ່ງ…"
+  },
+  "tripAwaiting": {
+    "waitingForRider": "ກຳລັງລໍຖ້າຜູ້ໂດຍສານເລືອກຄົນຂັບ…",
+    "autoUpdateNote": "ຂໍ້ສະເໜີຂອງທ່ານຖືກສົ່ງແລ້ວ. ໜ້ານີ້ຈະອັບເດດອັດຕະໂນມັດ.",
+    "backToRequests": "ກັບໄປຫາຄຳຮ້ອງຂໍ"
+  },
+  "tripInProgress": {
+    "riderFallback": "ຜູ້ໂດຍສານ",
+    "pickupLabel": "ຈຸດຮັບ: {{label}}",
+    "dropoffLabel": "ຈຸດສົ່ງ: {{label}}",
+    "startTrip": "ເລີ່ມການເດີນທາງ",
+    "starting": "ກຳລັງເລີ່ມ…",
+    "completeTrip": "ສຳເລັດການເດີນທາງ",
+    "completing": "ກຳລັງສຳເລັດ…"
+  },
+  "rating": {
+    "rateYourRider": "ໃຫ້ຄະແນນຜູ້ໂດຍສານຂອງທ່ານ",
+    "howWasThisTrip": "ການເດີນທາງນີ້ເປັນແນວໃດ?",
+    "commentPlaceholder": "ຝາກຄຳຄິດເຫັນ (ບໍ່ບັງຄັບ)"
+  },
+  "tripHistory": {
+    "title": "ລາຍໄດ້",
+    "totalFromTrips": "ລວມຈາກ {{count}} ຖ້ຽວທີ່ສຳເລັດແລ້ວ",
+    "empty": "ຍັງບໍ່ມີການເດີນທາງທີ່ສຳເລັດ."
+  },
+  "settings": {
+    "language": "ພາສາ"
+  },
+  "chat": {
+    "messagePlaceholder": "ພິມຂໍ້ຄວາມ…"
+  }
+}

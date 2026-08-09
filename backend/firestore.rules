@@ -1,0 +1,131 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      // Admins get a custom claim set server-side (see functions/src/admin.ts)
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // ---- Riders ----
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      // Riders can edit their own profile info, but not their own rating —
+      // that's only ever written by the submitRating Cloud Function.
+      allow update: if isAdmin() ||
+        (isOwner(uid) &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rating', 'ratingCount']));
+      allow delete: if false;
+    }
+
+    // ---- Drivers ----
+    match /drivers/{uid} {
+      // Riders need to read driver profile fields (name, rating, vehicle) while
+      // an offer is pending, so allow read to any signed-in user; lock down
+      // writes to the driver themself or admin.
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      // Drivers can only touch their own operational fields directly (location
+      // pings, push token, editing their own profile text). Notably NOT
+      // `isOnline` — going online is gated on wallet balance server-side by
+      // the setOnlineStatus Cloud Function, so it must not be client-writable
+      // here or a driver could bypass the balance check with a raw update.
+      // walletBalance, verificationStatus, rating, ratingCount, and totalRides
+      // are financial/trust fields, likewise Cloud-Function-only.
+      allow update: if isAdmin() ||
+        (isOwner(uid) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+           ['currentLocation', 'lastLocationAt', 'pushToken', 'name', 'phone', 'vehicleModel', 'plateNumber']
+         ));
+      allow delete: if false;
+    }
+
+    // ---- Ride requests ----
+    match /rideRequests/{rideId} {
+      allow read: if isSignedIn() &&
+        (resource.data.riderId == request.auth.uid ||
+         resource.data.assignedDriverId == request.auth.uid ||
+         resource.data.status in ['searching', 'offers_received'] ||
+         isAdmin());
+
+      allow create: if isSignedIn() && request.resource.data.riderId == request.auth.uid;
+
+      // Riders can update their own request (cancel, raise fare);
+      // Cloud Functions (admin SDK, bypasses rules) handle driver-assignment writes.
+      allow update: if isSignedIn() && resource.data.riderId == request.auth.uid;
+      allow delete: if false;
+
+      match /offers/{driverId} {
+        // Any online, approved driver can propose an offer.
+        allow create: if isSignedIn() && request.auth.uid == driverId;
+        // Rider (to accept/decline) or the offering driver (to withdraw) can update.
+        allow read: if isSignedIn();
+        allow update: if isSignedIn() &&
+          (request.auth.uid == driverId ||
+           get(/databases/$(database)/documents/rideRequests/$(rideId)).data.riderId == request.auth.uid);
+        allow delete: if false;
+      }
+
+      match /ratings/{raterId} {
+        // Rider or driver of this specific ride can read/write only their
+        // own rating doc (writes go through the submitRating Cloud Function
+        // via the Admin SDK anyway, which bypasses rules — this just also
+        // permits it if you ever want a client-side fallback).
+        allow read: if isSignedIn() &&
+          (get(/databases/$(database)/documents/rideRequests/$(rideId)).data.riderId == request.auth.uid ||
+           get(/databases/$(database)/documents/rideRequests/$(rideId)).data.assignedDriverId == request.auth.uid ||
+           isAdmin());
+        allow write: if false; // submitRating (Admin SDK) is the only writer
+      }
+
+      match /messages/{messageId} {
+        function isRideParty() {
+          let ride = get(/databases/$(database)/documents/rideRequests/$(rideId)).data;
+          return ride.riderId == request.auth.uid || ride.assignedDriverId == request.auth.uid;
+        }
+        allow read: if isSignedIn() && (isRideParty() || isAdmin());
+        allow create: if isSignedIn() && isRideParty() && request.resource.data.senderId == request.auth.uid;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // ---- Pricing config: admin-writable, everyone can read ----
+    match /pricingConfig/{zoneId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Wallet config: admin-writable, everyone can read (drivers need
+    // the minimum balance + bank details, riders don't need it but no harm) ----
+    match /walletConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- BCEL credentials: admin-only, never client-readable by anyone
+    // else. Separate from walletConfig on purpose — see DATA_MODEL.md. ----
+    match /secureConfig/{configId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ---- Driver wallet transactions: ledger, Cloud-Function-only writes ----
+    match /drivers/{uid}/walletTransactions/{transactionId} {
+      allow read: if isOwner(uid) || isAdmin();
+      // Only requestTopUp/reviewTopUp/completeTrip (all Admin SDK) write
+      // these — never the driver directly, so their balance can't be forged.
+      allow write: if false;
+    }
+  }
+}

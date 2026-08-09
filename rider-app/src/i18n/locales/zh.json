@@ -1,0 +1,120 @@
+{
+  "common": {
+    "done": "完成",
+    "cancel": "取消",
+    "close": "关闭",
+    "skip": "跳过",
+    "back": "返回",
+    "backToHome": "返回首页",
+    "cash": "现金",
+    "min": "分钟"
+  },
+  "splash": {
+    "tagline": "公平出行，由您决定"
+  },
+  "onboarding": {
+    "whatsYourNumber": "请输入您的手机号码",
+    "wellTextYouACode": "我们将发送验证码短信给您。",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "发送验证码",
+    "enterTheCode": "输入验证码",
+    "weSentACode": "我们已将6位验证码发送至 {{phone}}",
+    "verify": "验证",
+    "useADifferentNumber": "使用其他号码",
+    "termsPrefix": "加入本应用即表示您同意我们的",
+    "termsOfUse": "使用条款",
+    "and": "和",
+    "privacyPolicy": "隐私政策",
+    "includeCountryCodeTitle": "请填写国家代码",
+    "includeCountryCodeBody": "例如：+856 20 5555 5555",
+    "couldNotSendCode": "验证码发送失败",
+    "checkNumberAndRetry": "请检查号码后重试。",
+    "incorrectCode": "验证码不正确",
+    "pleaseTryAgain": "请重试。"
+  },
+  "home": {
+    "whereFrom": "出发地",
+    "whereToPrompt": "去哪里，愿意出多少钱？",
+    "cityRides": "市内出行",
+    "couriers": "快递配送"
+  },
+  "setDestination": {
+    "moveMapPrompt": "移动地图以设置目的地"
+  },
+  "chooseRide": {
+    "recommendedFare": "建议车费",
+    "findOffers": "寻找司机",
+    "autoAcceptOffer": "自动接受 {{fare}} 的报价",
+    "options": "选项",
+    "moreThan4Passengers": "超过4名乘客",
+    "childSafetySeat": "儿童安全座椅",
+    "comments": "备注",
+    "couldNotRequestRide": "无法请求用车",
+    "pleaseSignInFirst": "请先登录",
+    "calculatingRoute": "正在计算路线…",
+    "rideName": "经济型",
+    "rideDesc": "实惠车费",
+    "electroName": "电动车",
+    "electroDesc": "环保出行",
+    "motoName": "摩托车",
+    "motoDesc": "不堵车，价格更低",
+    "courierName": "快递配送",
+    "courierDesc": "申请包裹配送，最重20公斤",
+    "comfortName": "舒适型",
+    "comfortDesc": "更新款车辆"
+  },
+  "searching": {
+    "driversViewing_other": "{{count}} 位司机正在查看您的请求",
+    "goodFarePriority": "价格合理，您的请求将优先处理",
+    "raiseFare": "提高车费",
+    "autoAcceptNearest": "自动接受最近司机的 {{fare}} 报价",
+    "cancelRequest": "取消请求",
+    "stillNeedARide": "还需要用车吗？以更高车费重新搜索",
+    "increaseChances": "提高您叫到车的几率",
+    "searchAt": "以 {{fare}} 搜索",
+    "mostPassengersGetRide": "大多数乘客在相似路线上以此价格叫到车",
+    "iWantToCancel": "我要取消",
+    "whyCancel": "您为什么要取消？",
+    "reasonDriversTooFar": "司机距离太远",
+    "reasonHighFares": "车费太高",
+    "reasonAccidental": "误操作请求",
+    "reasonWrongPoint": "上车或目的地位置错误",
+    "reasonNoOffers": "没有司机报价",
+    "reasonOther": "其他原因"
+  },
+  "chooseDriver": {
+    "chooseADriver": "选择司机",
+    "allDriversVerified": "所有司机均已通过认证",
+    "decline": "拒绝",
+    "accept": "接受",
+    "accepting": "正在接受…",
+    "waitingForOffers": "正在等待司机报价…",
+    "ridesCount": "{{count}} 次行程",
+    "cancelYourRequest": "确定要取消请求吗？",
+    "betterOffersMayAppear": "可能会有更好的报价出现，要不要再等一会儿？",
+    "keepSearching": "继续搜索",
+    "cancelledFromPicker": "从选择司机页面取消"
+  },
+  "tripInProgress": {
+    "onTheWay": "{{driverName}} 正在赶来",
+    "tripUnderway": "与 {{driverName}} 的行程",
+    "waitingForDriver": "司机完成行程后，本页面将自动更新。",
+    "fareLabel": "车费：{{fare}} · 现金"
+  },
+  "rating": {
+    "howWasYourTrip": "本次行程感觉如何？",
+    "rateDriverName": "为 {{driverName}} 评分",
+    "commentPlaceholder": "留下评论（可选）",
+    "submit": "提交"
+  },
+  "tripHistory": {
+    "title": "行程记录",
+    "empty": "暂无已完成的行程。"
+  },
+  "settings": {
+    "language": "语言"
+  },
+  "chat": {
+    "messagePlaceholder": "输入消息…"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "nav": {
+    "liveRides": "实时行程",
+    "drivers": "司机",
+    "pricing": "定价",
+    "analytics": "数据分析",
+    "topups": "充值申请",
+    "walletSettings": "钱包设置",
+    "signOut": "退出登录",
+    "language": "语言"
+  },
+  "login": {
+    "signInTagline": "使用您的管理员账户登录",
+    "email": "邮箱",
+    "password": "密码",
+    "signIn": "登录",
+    "signingIn": "正在登录…",
+    "signInFailed": "登录失败",
+    "noAdminNote": "还没有管理员账户？为自己创建一个 Firebase Auth 用户（邮箱/密码），然后运行",
+    "toGrantAdmin": "（后端项目中的脚本）以授予管理员权限。"
+  },
+  "protectedRoute": {
+    "loading": "加载中…",
+    "noAdminAccess": "已登录，但该账户没有管理员权限。",
+    "askAdmin": "请让现有管理员通过初始化脚本授予权限。"
+  },
+  "rides": {
+    "title": "实时行程",
+    "shownCount": "显示 {{count}} 条 · 实时更新",
+    "rider": "乘客",
+    "route": "路线",
+    "type": "类型",
+    "fare": "车费",
+    "status": "状态",
+    "noneMatchFilter": "没有符合此筛选条件的行程。",
+    "statusAll": "全部",
+    "statusSearching": "搜索中",
+    "statusOffersReceived": "已收到报价",
+    "statusDriverAssigned": "已分配司机",
+    "statusInProgress": "进行中",
+    "statusCompleted": "已完成",
+    "statusCancelled": "已取消"
+  },
+  "drivers": {
+    "title": "司机",
+    "tagline": "在批准司机上线前，请先审核车辆信息。",
+    "tabPending": "待审核",
+    "tabApproved": "已批准",
+    "tabRejected": "已拒绝",
+    "ridesCount": "{{count}} 次行程",
+    "approve": "批准",
+    "reject": "拒绝",
+    "moveBackToPending": "移回待审核",
+    "revokeApproval": "撤销批准",
+    "noneInTab": "暂无{{tab}}的司机。"
+  },
+  "pricing": {
+    "title": "定价",
+    "tagline": "按区域设置每公里基础车费和最低车费。",
+    "newZonePlaceholder": "新区域ID（例如：vientiane-central）",
+    "addZone": "添加区域",
+    "zoneName": "区域名称",
+    "minimumFare": "最低车费（{{currency}}）",
+    "perKm": "{{rideType}} — 每公里",
+    "save": "保存",
+    "saving": "保存中…",
+    "noZonesYet": "暂无定价区域 — 请在上方添加一个。"
+  },
+  "analytics": {
+    "title": "数据分析",
+    "tagline": "业务表现一览。",
+    "totalRevenue": "总收入（已完成行程）",
+    "completedRides": "已完成行程数",
+    "activeDrivers": "当前在线司机数",
+    "pendingApprovals": "待审核司机数",
+    "ridesLast7Days": "过去7天已完成行程"
+  },
+  "wallet": {
+    "title": "钱包设置",
+    "tagline": "佣金比例、上线所需最低余额，以及司机在充值页面看到的银行转账信息。",
+    "commissionRate": "佣金比例（0-1）",
+    "commissionRateHint": "目前每笔已完成行程车费扣除 {{percent}}%。",
+    "minimumBalance": "上线所需最低余额（{{currency}}）",
+    "topUpMode": "充值模式",
+    "topUpModeManual": "手动（银行二维码 + 管理员审核）",
+    "topUpModeAuto": "自动（BCEL API — 尚未可用）",
+    "topUpModeAutoHint": "待您的 BCEL API 对接就绪后即可切换为自动模式 — 目前此选项已禁用。",
+    "topUpModeAutoReady": "BCEL 凭证已设置 — 您可以切换为自动充值。",
+    "bankName": "银行名称",
+    "bankAccountName": "账户名称",
+    "bankAccountNumber": "账号",
+    "qrImage": "银行二维码图片",
+    "bcelTitle": "BCEL API 凭证（自动充值）",
+    "bcelTagline": "仅管理员可见 — 不会展示给司机或乘客。获得 BCEL API 权限后填写这些信息，然后在上方将充值模式切换为自动。",
+    "bcelMerchantId": "商户编号",
+    "bcelApiKey": "API 密钥",
+    "bcelApiSecret": "API 密钥（Secret）",
+    "bcelWebhookSecret": "Webhook 密钥",
+    "bcelIncompleteNote": "填写全部四个字段以启用自动充值模式。"
+  },
+  "topups": {
+    "title": "充值申请",
+    "tagline": "审核付款凭证，批准或拒绝司机的钱包充值。",
+    "approve": "批准",
+    "reject": "拒绝",
+    "none": "暂无待处理的充值申请。"
+  }
+}

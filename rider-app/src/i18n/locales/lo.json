@@ -1,0 +1,121 @@
+{
+  "common": {
+    "done": "ແລ້ວໆ",
+    "cancel": "ຍົກເລີກ",
+    "close": "ປິດ",
+    "skip": "ຂ້າມ",
+    "back": "ກັບຄືນ",
+    "backToHome": "ກັບໄປໜ້າຫຼັກ",
+    "cash": "ເງິນສົດ",
+    "min": "ນາທີ"
+  },
+  "splash": {
+    "tagline": "ແອັບຂອງທ່ານສຳລັບການເດີນທາງທີ່ຍຸຕິທຳ"
+  },
+  "onboarding": {
+    "whatsYourNumber": "ເບີໂທຂອງທ່ານແມ່ນຫຍັງ?",
+    "wellTextYouACode": "ພວກເຮົາຈະສົ່ງລະຫັດຢືນຢັນຫາທ່ານທາງ SMS.",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "ສົ່ງລະຫັດ",
+    "enterTheCode": "ປ້ອນລະຫັດ",
+    "weSentACode": "ພວກເຮົາໄດ້ສົ່ງລະຫັດ 6 ຕົວເລກໄປຫາ {{phone}}",
+    "verify": "ຢືນຢັນ",
+    "useADifferentNumber": "ໃຊ້ເບີໂທອື່ນ",
+    "termsPrefix": "ການເຂົ້າຮ່ວມແອັບຂອງພວກເຮົາໝາຍຄວາມວ່າທ່ານຍອມຮັບ",
+    "termsOfUse": "ເງື່ອນໄຂການນຳໃຊ້",
+    "and": "ແລະ",
+    "privacyPolicy": "ນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ",
+    "includeCountryCodeTitle": "ກະລຸນາໃສ່ລະຫັດປະເທດ",
+    "includeCountryCodeBody": "ຕົວຢ່າງ: +856 20 5555 5555",
+    "couldNotSendCode": "ບໍ່ສາມາດສົ່ງລະຫັດໄດ້",
+    "checkNumberAndRetry": "ກະລຸນາກວດເບີໂທ ແລ້ວລອງໃໝ່.",
+    "incorrectCode": "ລະຫັດບໍ່ຖືກຕ້ອງ",
+    "pleaseTryAgain": "ກະລຸນາລອງໃໝ່."
+  },
+  "home": {
+    "whereFrom": "ຈຸດຮັບ",
+    "whereToPrompt": "ໄປໃສ ແລະ ລາຄາເທົ່າໃດ?",
+    "cityRides": "ໂດຍສານໃນເມືອງ",
+    "couriers": "ບໍລິການສົ່ງເຄື່ອງ"
+  },
+  "setDestination": {
+    "moveMapPrompt": "ເລື່ອນແຜນທີ່ເພື່ອກຳນົດຈຸດໝາຍ"
+  },
+  "chooseRide": {
+    "recommendedFare": "ລາຄາທີ່ແນະນຳ",
+    "findOffers": "ຄົ້ນຫາຄົນຂັບ",
+    "autoAcceptOffer": "ຮັບອັດຕະໂນມັດໃນລາຄາ {{fare}}",
+    "options": "ຕົວເລືອກ",
+    "moreThan4Passengers": "ຜູ້ໂດຍສານຫຼາຍກວ່າ 4 ຄົນ",
+    "childSafetySeat": "ບ່ອນນັ່ງເດັກນ້ອຍ",
+    "comments": "ໝາຍເຫດ",
+    "couldNotRequestRide": "ບໍ່ສາມາດຮ້ອງຂໍລົດໄດ້",
+    "pleaseSignInFirst": "ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ",
+    "calculatingRoute": "ກຳລັງຄິດໄລ່ເສັ້ນທາງ…",
+    "rideName": "ລົດທົ່ວໄປ",
+    "rideDesc": "ລາຄາເປັນມິດ",
+    "electroName": "ລົດໄຟຟ້າ",
+    "electroDesc": "ເປັນມິດກັບສິ່ງແວດລ້ອມ",
+    "motoName": "ລົດຈັກ",
+    "motoDesc": "ບໍ່ຕິດລົດຕິດ, ລາຄາຖືກກວ່າ",
+    "courierName": "ບໍລິການສົ່ງເຄື່ອງ",
+    "courierDesc": "ຮ້ອງຂໍການສົ່ງເຄື່ອງ, ໜັກໄດ້ເຖິງ 20 ກິໂລ",
+    "comfortName": "ຄອມຟອດ",
+    "comfortDesc": "ລົດໃໝ່ກວ່າ"
+  },
+  "searching": {
+    "driversViewing_one": "ຄົນຂັບ {{count}} ຄົນກຳລັງເບິ່ງຄຳຮ້ອງຂໍຂອງທ່ານ",
+    "driversViewing_other": "ຄົນຂັບ {{count}} ຄົນກຳລັງເບິ່ງຄຳຮ້ອງຂໍຂອງທ່ານ",
+    "goodFarePriority": "ລາຄາດີ. ຄຳຮ້ອງຂໍຂອງທ່ານໄດ້ຮັບບູລິມະສິດ",
+    "raiseFare": "ເພີ່ມລາຄາ",
+    "autoAcceptNearest": "ຮັບຄົນຂັບທີ່ໃກ້ທີ່ສຸດອັດຕະໂນມັດໃນລາຄາ {{fare}}",
+    "cancelRequest": "ຍົກເລີກຄຳຮ້ອງຂໍ",
+    "stillNeedARide": "ຍັງຕ້ອງການລົດຢູ່ບໍ? ຄົ້ນຫາອີກຄັ້ງດ້ວຍລາຄາທີ່ສູງຂຶ້ນ",
+    "increaseChances": "ເພີ່ມໂອກາດໃນການໄດ້ຮັບລົດ",
+    "searchAt": "ຄົ້ນຫາໃນລາຄາ {{fare}}",
+    "mostPassengersGetRide": "ຜູ້ໂດຍສານສ່ວນຫຼາຍໄດ້ຮັບລົດໃນລາຄານີ້ສຳລັບເສັ້ນທາງທີ່ຄ້າຍຄືກັນ",
+    "iWantToCancel": "ຂ້ອຍຕ້ອງການຍົກເລີກ",
+    "whyCancel": "ເປັນຫຍັງທ່ານຕ້ອງການຍົກເລີກ?",
+    "reasonDriversTooFar": "ຄົນຂັບຢູ່ໄກເກີນໄປ",
+    "reasonHighFares": "ລາຄາແພງເກີນໄປ",
+    "reasonAccidental": "ຮ້ອງຂໍໂດຍບໍ່ຕັ້ງໃຈ",
+    "reasonWrongPoint": "ຈຸດຮັບ ຫຼື ຈຸດໝາຍບໍ່ຖືກຕ້ອງ",
+    "reasonNoOffers": "ບໍ່ມີຄົນຂັບສະເໜີລາຄາ",
+    "reasonOther": "ເຫດຜົນອື່ນໆ"
+  },
+  "chooseDriver": {
+    "chooseADriver": "ເລືອກຄົນຂັບ",
+    "allDriversVerified": "ຄົນຂັບທຸກຄົນຜ່ານການກວດສອບແລ້ວ",
+    "decline": "ປະຕິເສດ",
+    "accept": "ຮັບ",
+    "accepting": "ກຳລັງຮັບ…",
+    "waitingForOffers": "ກຳລັງລໍຖ້າຂໍ້ສະເໜີຈາກຄົນຂັບ…",
+    "ridesCount": "{{count}} ຖ້ຽວ",
+    "cancelYourRequest": "ຍົກເລີກຄຳຮ້ອງຂໍຂອງທ່ານບໍ?",
+    "betterOffersMayAppear": "ອາດຈະມີຂໍ້ສະເໜີທີ່ດີກວ່ານີ້. ຄົ້ນຫາຕໍ່ອີກໜ້ອຍໜຶ່ງບໍ?",
+    "keepSearching": "ຄົ້ນຫາຕໍ່",
+    "cancelledFromPicker": "ຍົກເລີກຈາກໜ້າເລືອກຄົນຂັບ"
+  },
+  "tripInProgress": {
+    "onTheWay": "{{driverName}} ກຳລັງເດີນທາງມາ",
+    "tripUnderway": "ການເດີນທາງກັບ {{driverName}}",
+    "waitingForDriver": "ໜ້ານີ້ຈະອັບເດດອັດຕະໂນມັດເມື່ອຄົນຂັບສຳເລັດການເດີນທາງ.",
+    "fareLabel": "ຄ່າໂດຍສານ: {{fare}} · ເງິນສົດ"
+  },
+  "rating": {
+    "howWasYourTrip": "ການເດີນທາງເປັນແນວໃດ?",
+    "rateDriverName": "ໃຫ້ຄະແນນ {{driverName}}",
+    "commentPlaceholder": "ຝາກຄຳຄິດເຫັນ (ບໍ່ບັງຄັບ)",
+    "submit": "ສົ່ງ"
+  },
+  "tripHistory": {
+    "title": "ປະຫວັດການເດີນທາງ",
+    "empty": "ຍັງບໍ່ມີການເດີນທາງທີ່ສຳເລັດ."
+  },
+  "settings": {
+    "language": "ພາສາ"
+  },
+  "chat": {
+    "messagePlaceholder": "ພິມຂໍ້ຄວາມ…"
+  }
+}

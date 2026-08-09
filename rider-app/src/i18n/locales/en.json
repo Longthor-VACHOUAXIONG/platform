@@ -1,0 +1,121 @@
+{
+  "common": {
+    "done": "Done",
+    "cancel": "Cancel",
+    "close": "Close",
+    "skip": "Skip",
+    "back": "Back",
+    "backToHome": "Back to home",
+    "cash": "Cash",
+    "min": "min"
+  },
+  "splash": {
+    "tagline": "Your app for fair rides"
+  },
+  "onboarding": {
+    "whatsYourNumber": "What's your number?",
+    "wellTextYouACode": "We'll text you a code to verify it's you.",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "Send code",
+    "enterTheCode": "Enter the code",
+    "weSentACode": "We sent a 6-digit code to {{phone}}",
+    "verify": "Verify",
+    "useADifferentNumber": "Use a different number",
+    "termsPrefix": "Joining our app means you agree with our",
+    "termsOfUse": "Terms of Use",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "includeCountryCodeTitle": "Include your country code",
+    "includeCountryCodeBody": "e.g. +856 20 5555 5555",
+    "couldNotSendCode": "Could not send code",
+    "checkNumberAndRetry": "Please check the number and try again.",
+    "incorrectCode": "Incorrect code",
+    "pleaseTryAgain": "Please try again."
+  },
+  "home": {
+    "whereFrom": "Where from",
+    "whereToPrompt": "Where to & for how much?",
+    "cityRides": "City rides",
+    "couriers": "Couriers"
+  },
+  "setDestination": {
+    "moveMapPrompt": "Move the map to set your destination"
+  },
+  "chooseRide": {
+    "recommendedFare": "Recommended fare",
+    "findOffers": "Find offers",
+    "autoAcceptOffer": "Auto-accept offer of {{fare}}",
+    "options": "Options",
+    "moreThan4Passengers": "More than 4 passengers",
+    "childSafetySeat": "Child safety seat",
+    "comments": "Comments",
+    "couldNotRequestRide": "Could not request a ride",
+    "pleaseSignInFirst": "Please sign in first",
+    "calculatingRoute": "Calculating route…",
+    "rideName": "Ride",
+    "rideDesc": "Affordable fares",
+    "electroName": "Electro",
+    "electroDesc": "Eco-friendly rides",
+    "motoName": "Moto",
+    "motoDesc": "No traffic, lower prices",
+    "courierName": "Couriers",
+    "courierDesc": "Request package delivery, up to 20kg",
+    "comfortName": "Comfort",
+    "comfortDesc": "Newer cars"
+  },
+  "searching": {
+    "driversViewing_one": "{{count}} driver viewing your request",
+    "driversViewing_other": "{{count}} drivers viewing your request",
+    "goodFarePriority": "Good fare. Your request gets priority",
+    "raiseFare": "Raise fare",
+    "autoAcceptNearest": "Automatically accept the nearest driver for {{fare}}",
+    "cancelRequest": "Cancel request",
+    "stillNeedARide": "Still need a ride? Search again with the higher fare",
+    "increaseChances": "Increase your chances of getting a ride",
+    "searchAt": "Search at {{fare}}",
+    "mostPassengersGetRide": "Most passengers get a ride at this fare on similar routes",
+    "iWantToCancel": "I want to cancel",
+    "whyCancel": "Why do you want to cancel?",
+    "reasonDriversTooFar": "Drivers are too far away",
+    "reasonHighFares": "High fares",
+    "reasonAccidental": "Accidental request",
+    "reasonWrongPoint": "Wrong pickup or destination point",
+    "reasonNoOffers": "No offers from drivers",
+    "reasonOther": "Another reason"
+  },
+  "chooseDriver": {
+    "chooseADriver": "Choose a driver",
+    "allDriversVerified": "All drivers verified",
+    "decline": "Decline",
+    "accept": "Accept",
+    "accepting": "Accepting…",
+    "waitingForOffers": "Waiting for driver offers…",
+    "ridesCount": "{{count}} rides",
+    "cancelYourRequest": "Cancel your request?",
+    "betterOffersMayAppear": "Better offers may still appear. Keep searching a bit longer?",
+    "keepSearching": "Keep searching",
+    "cancelledFromPicker": "Cancelled from driver picker"
+  },
+  "tripInProgress": {
+    "onTheWay": "{{driverName}} is on the way",
+    "tripUnderway": "Trip with {{driverName}}",
+    "waitingForDriver": "This screen updates automatically when your driver completes the trip.",
+    "fareLabel": "Fare: {{fare}} · Cash"
+  },
+  "rating": {
+    "howWasYourTrip": "How was your trip?",
+    "rateDriverName": "Rate {{driverName}}",
+    "commentPlaceholder": "Leave a comment (optional)",
+    "submit": "Submit"
+  },
+  "tripHistory": {
+    "title": "Trip history",
+    "empty": "No completed trips yet."
+  },
+  "settings": {
+    "language": "Language"
+  },
+  "chat": {
+    "messagePlaceholder": "Type a message…"
+  }
+}

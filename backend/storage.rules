@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Payment-proof screenshots drivers upload with a top-up request.
+    // Only the driver who owns the folder, or an admin, can read them;
+    // only the driver can upload into their own folder.
+    match /walletProofs/{driverId}/{fileName} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == driverId || request.auth.token.admin == true);
+      allow write: if request.auth != null && request.auth.uid == driverId;
+    }
+
+    // Admin-uploaded bank QR code image, shown to every driver on the
+    // top-up screen. Anyone signed in can read it; only admins can write.
+    match /walletConfig/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "nav": {
+    "liveRides": "Live rides",
+    "drivers": "Drivers",
+    "pricing": "Pricing",
+    "analytics": "Analytics",
+    "topups": "Top-up requests",
+    "walletSettings": "Wallet settings",
+    "signOut": "Sign out",
+    "language": "Language"
+  },
+  "login": {
+    "signInTagline": "Sign in with your admin account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signInFailed": "Sign in failed",
+    "noAdminNote": "No admin account yet? Create a Firebase Auth user (email/password) for yourself, then run",
+    "toGrantAdmin": "from the backend package to grant the admin role."
+  },
+  "protectedRoute": {
+    "loading": "Loading…",
+    "noAdminAccess": "Signed in, but this account doesn't have admin access.",
+    "askAdmin": "Ask an existing admin to grant it via the bootstrap script."
+  },
+  "rides": {
+    "title": "Live rides",
+    "shownCount": "{{count}} shown · updates in real time",
+    "rider": "Rider",
+    "route": "Route",
+    "type": "Type",
+    "fare": "Fare",
+    "status": "Status",
+    "noneMatchFilter": "No rides match this filter yet.",
+    "statusAll": "all",
+    "statusSearching": "searching",
+    "statusOffersReceived": "offers received",
+    "statusDriverAssigned": "driver assigned",
+    "statusInProgress": "in progress",
+    "statusCompleted": "completed",
+    "statusCancelled": "cancelled"
+  },
+  "drivers": {
+    "title": "Drivers",
+    "tagline": "Review vehicle details before approving a driver to go online.",
+    "tabPending": "pending",
+    "tabApproved": "approved",
+    "tabRejected": "rejected",
+    "ridesCount": "{{count}} rides",
+    "approve": "Approve",
+    "reject": "Reject",
+    "moveBackToPending": "Move back to pending",
+    "revokeApproval": "Revoke approval",
+    "noneInTab": "No {{tab}} drivers."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "tagline": "Base fare per kilometre and minimum fare, by zone.",
+    "newZonePlaceholder": "New zone ID (e.g. vientiane-central)",
+    "addZone": "Add zone",
+    "zoneName": "Zone name",
+    "minimumFare": "Minimum fare ({{currency}})",
+    "perKm": "{{rideType}} — per km",
+    "save": "Save",
+    "saving": "Saving…",
+    "noZonesYet": "No pricing zones yet — add one above."
+  },
+  "analytics": {
+    "title": "Analytics",
+    "tagline": "Business performance at a glance.",
+    "totalRevenue": "Total revenue (completed trips)",
+    "completedRides": "Completed rides",
+    "activeDrivers": "Active drivers now",
+    "pendingApprovals": "Pending driver approvals",
+    "ridesLast7Days": "Completed rides, last 7 days"
+  },
+  "wallet": {
+    "title": "Wallet settings",
+    "tagline": "Commission rate, minimum balance to go online, and bank transfer details drivers see on the top-up screen.",
+    "commissionRate": "Commission rate (0-1)",
+    "commissionRateHint": "Currently {{percent}}% cut from each completed trip's fare.",
+    "minimumBalance": "Minimum balance to go online ({{currency}})",
+    "topUpMode": "Top-up mode",
+    "topUpModeManual": "Manual (bank QR + admin approval)",
+    "topUpModeAuto": "Automatic (BCEL API — not available yet)",
+    "topUpModeAutoHint": "Switch to automatic once your BCEL API integration is ready — this option is disabled until then.",
+    "topUpModeAutoReady": "BCEL credentials are set — you can switch to automatic top-up.",
+    "bankName": "Bank name",
+    "bankAccountName": "Account name",
+    "bankAccountNumber": "Account number",
+    "qrImage": "Bank QR code image",
+    "bcelTitle": "BCEL API credentials (auto top-up)",
+    "bcelTagline": "Admin-only — never shown to drivers or riders. Fill these in once you have BCEL API access, then switch Top-up mode to Automatic above.",
+    "bcelMerchantId": "Merchant ID",
+    "bcelApiKey": "API key",
+    "bcelApiSecret": "API secret",
+    "bcelWebhookSecret": "Webhook secret",
+    "bcelIncompleteNote": "Fill in all four fields to enable automatic top-up mode."
+  },
+  "topups": {
+    "title": "Top-up requests",
+    "tagline": "Review payment proof and approve or reject driver wallet top-ups.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "none": "No pending top-up requests."
+  }
+}

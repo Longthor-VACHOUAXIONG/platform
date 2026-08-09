@@ -1,0 +1,73 @@
+{
+  "common": {
+    "skip": "Skip",
+    "submit": "Submit",
+    "back": "Back",
+    "cash": "Cash",
+    "min": "min"
+  },
+  "auth": {
+    "signUpTagline": "Sign up to start receiving ride requests.",
+    "enterPhoneToStart": "Enter your phone number to get started.",
+    "phonePlaceholder": "+856 20 5555 5555",
+    "sendCode": "Send code",
+    "enterCodeSentTo": "Enter the 6-digit code sent to {{phone}}.",
+    "verify": "Verify",
+    "almostDone": "Almost done — tell us about you and your vehicle.",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "e.g. Silaxay",
+    "vehicleModel": "Vehicle model",
+    "vehicleModelPlaceholder": "e.g. Honda E NS1",
+    "plateNumber": "Plate number",
+    "plateNumberPlaceholder": "e.g. AB 1234",
+    "finishSignUp": "Finish sign up",
+    "reviewNote": "Your account will be reviewed before you can accept rides. This usually takes 1-2 days.",
+    "includeCountryCodeTitle": "Include your country code",
+    "includeCountryCodeBody": "e.g. +856 20 5555 5555",
+    "couldNotSendCode": "Could not send code",
+    "checkNumberAndRetry": "Please check the number and try again.",
+    "incorrectCode": "Incorrect code",
+    "pleaseTryAgain": "Please try again.",
+    "signUpFailed": "Sign up failed"
+  },
+  "home": {
+    "youreOnline": "You're online",
+    "youreOffline": "You're offline",
+    "earnings": "Earnings",
+    "nearbyRequests": "Nearby requests",
+    "waitingForRequests": "Waiting for ride requests…",
+    "makeAnOffer": "Make an offer",
+    "sendOffer": "Send offer",
+    "sending": "Sending…"
+  },
+  "tripAwaiting": {
+    "waitingForRider": "Waiting for the rider to choose a driver…",
+    "autoUpdateNote": "Your offer has been sent. This screen updates automatically.",
+    "backToRequests": "Back to requests"
+  },
+  "tripInProgress": {
+    "riderFallback": "Rider",
+    "pickupLabel": "Pickup: {{label}}",
+    "dropoffLabel": "Dropoff: {{label}}",
+    "startTrip": "Start trip",
+    "starting": "Starting…",
+    "completeTrip": "Complete trip",
+    "completing": "Completing…"
+  },
+  "rating": {
+    "rateYourRider": "Rate your rider",
+    "howWasThisTrip": "How was this trip?",
+    "commentPlaceholder": "Leave a comment (optional)"
+  },
+  "tripHistory": {
+    "title": "Earnings",
+    "totalFromTrips": "Total from {{count}} completed trips",
+    "empty": "No completed trips yet."
+  },
+  "settings": {
+    "language": "Language"
+  },
+  "chat": {
+    "messagePlaceholder": "Type a message…"
+  }
+}

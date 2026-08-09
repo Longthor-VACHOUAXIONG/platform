@@ -1,6 +1,10 @@
 // Points at your own VPS running the Docker stack in /infra — see
-// /infra/README.md for setup. Swap these to a domain (with HTTPS) once you
-// move past testing — see /infra/README.md "Production hardening".
+// /infra/README.md for setup.
+// 
+// ⚠️ PRODUCTION: Replace IP with a domain name and enable HTTPS (see /infra/README.md "Production hardening").
+// App stores require HTTPS for network requests. Example:
+//   const HOST = 'maps.gofair.la'; // with HTTPS cert from Let's Encrypt
+//   export const TILE_URL_TEMPLATE = `https://${HOST}/tile/{z}/{x}/{y}.png`;
 const HOST = '178.105.31.74';
 
 export const TILE_URL_TEMPLATE = `http://${HOST}/tile/{z}/{x}/{y}.png`;

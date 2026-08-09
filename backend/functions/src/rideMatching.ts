@@ -99,7 +99,45 @@ export async function sendPushToTokens(
       .map((r, i) => (!r.success ? tokens[i] : null))
       .filter((t): t is string => !!t);
     logger.warn(`${response.failureCount} push(es) failed`, { staleTokens });
-    // TODO: look up which driver(s) own these stale tokens and clear
-    // drivers/{uid}.pushToken so you stop retrying dead tokens.
+    // Clean up stale tokens to stop retrying dead endpoints
+    await cleanupStaleTokens(staleTokens);
+  }
+}
+
+/**
+ * Cleans up stale push tokens from driver and rider documents
+ * to prevent repeated failed delivery attempts.
+ */
+async function cleanupStaleTokens(staleTokens: string[]) {
+  if (staleTokens.length === 0) return;
+
+  const batch = db.batch();
+  let count = 0;
+
+  // Check drivers collection
+  const driversSnapshot = await db
+    .collection('drivers')
+    .where('pushToken', 'in', staleTokens.slice(0, 10)) // Firestore 'in' limit is 10
+    .get();
+  
+  driversSnapshot.forEach((doc) => {
+    batch.update(doc.ref, { pushToken: null });
+    count++;
+  });
+
+  // Check riders collection
+  const ridersSnapshot = await db
+    .collection('riders')
+    .where('pushToken', 'in', staleTokens.slice(0, 10))
+    .get();
+  
+  ridersSnapshot.forEach((doc) => {
+    batch.update(doc.ref, { pushToken: null });
+    count++;
+  });
+
+  if (count > 0) {
+    await batch.commit();
+    logger.info(`Cleaned up ${count} stale push tokens`);
   }
 }

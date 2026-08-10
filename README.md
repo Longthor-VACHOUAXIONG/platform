@@ -88,9 +88,9 @@ Admin auth is unchanged — real email/password via the Firebase JS SDK, which i
 app (no native module needed there). Add 2FA later if your Firebase plan supports it.
 
 ### Still not done
-- Rider push notifications (drivers get pushes; riders currently only see new offers while the
-  app's in the foreground, since it's actively listening on that screen — lower priority since the
-  rider is expected to be watching the search screen).
+- Nothing. Rider push notifications are now wired end-to-end (see below) — riders
+  get a push on chat messages, trip start, and trip completion, using the same
+  FCM pattern the driver app uses.
 
 ## iOS builds
 
@@ -142,16 +142,15 @@ Riders and drivers can message each other once a ride is assigned, via a `messag
 on each ride request:
 
 - **Backend**: `firestore.rules` scopes read/write to the ride's rider and assigned driver only.
-  `onChatMessageCreated` (a Firestore trigger) pushes a notification to the driver when the rider
-  sends a message — driver-only for now, since rider push isn't wired up yet (see below).
+  `onChatMessageCreated` (a Firestore trigger) pushes a notification to the *rider* when the driver
+  sends a message.
 - **Both apps**: a chat button on the trip-in-progress screen opens `ChatScreen` — a live message
   list + input, translated in all three languages.
-
-**Still not done**: rider push notifications. Drivers get pushed on new requests, ride assignment,
-and chat messages; riders currently only see these live while the relevant screen is open, since
-the rider app doesn't register an FCM token. Wiring it is the same pattern as the driver app's
-`pushNotifications.ts` — request permission, get a token, save it, add a background handler in
-`index.ts` — then mirror `onChatMessageCreated` for the rider direction.
+- **Rider push notifications**: riders now register an FCM token too (same pattern as the driver
+  app's `pushNotifications.ts` — token saved via the `registerRiderPushToken` callable, background
+  handler in `index.ts`). `sendChatMessage` pushes to whichever party *isn't* the sender, and
+  `startTrip`/`completeTrip` push to the rider so a backgrounded rider still hears about trip
+  events.
 
 ## Admin analytics
 
@@ -163,29 +162,20 @@ stats if you need this to scale past a few thousand rides.
 
 ## Payments
 
-Every ride request now carries `paymentMethod` and `paymentStatus` fields (see `DATA_MODEL.md`),
-currently hardcoded to `'cash'` / `'n/a'` — this is the extension point, not a working integration.
+Payment model: **manual driver-wallet deposits + automatic commission deduction** — no payment
+gateway involved.
 
-**I didn't build against a specific payment gateway because that's a business decision, not a
-technical one** — it means signing an agreement with a specific provider, and picking wrong means
-redoing the integration. Realistic options for a Laos-based launch, roughly in order of how much
-setup they need:
-
-- **Cash only (current state)** — zero integration work, but caps how "digital" the product feels
-  and means drivers handle cash reconciliation themselves.
-- **Mobile money** (e.g. a Lao bank's QR/wallet API, or a regional provider like OnePay) — the most
-  common digital rail in this market; typically needs a merchant agreement with the bank/provider
-  and their SDK or REST API.
-- **Card payments** via an aggregator (Stripe-style) — smoothest integration *if* the provider
-  supports Laos, which many major ones don't yet; worth checking availability before assuming this
-  path is open.
-- **In-app wallet** (rider tops up a balance, driver cashes out) — most engineering work of the
-  four, but keeps money inside your own ledger instead of a per-trip gateway call.
-
-Once you've picked one, the integration point is: rider app calls the provider's SDK when
-requesting a ride (or after trip completion, if it's post-paid), a Cloud Function verifies the
-payment webhook and flips `paymentStatus` to `'paid'`, and `completeTrip` in `rideLifecycle.ts`
-becomes the natural place to trigger a payout/settlement record for the driver.
+- Every ride request carries `paymentMethod: 'wallet'` and `paymentStatus: 'n/a'` (see
+  `DATA_MODEL.md`).
+- The rider pays the driver directly at trip end; the platform's cut is handled by the driver
+  wallet: a driver tops up their wallet manually (bank QR transfer + proof screenshot, admin
+  approves), and `completeTrip` auto-deducts `commissionRate × fare` from that balance in the same
+  transaction that marks the ride complete.
+- A driver can't even go online below the configured minimum balance, so there's always enough in
+  the wallet to cover commission on a trip.
+- If you later want a real digital rail, the extension point is unchanged: rider app calls the
+  provider's SDK, a Cloud Function verifies the webhook and flips `paymentStatus` to `'paid'`,
+  and `completeTrip` remains where the payout/settlement record would go.
 
 ## Driver wallet
 
@@ -317,13 +307,13 @@ To finish setting this up:
 - **Driver matching** currently pulls *all* open ride requests to *every* online driver's device
   and filters client-side by nothing (see `driverApi.ts` TODO). Fine for a pilot in one small city;
   before scaling, add geohash-based querying (e.g. GeoFirestore) so drivers only see nearby requests.
-- **Fare estimation** uses straight-line (haversine) distance, not road distance. Swap in Google
-  Directions API or Mapbox Directions for accurate ETAs and recommended fares.
-- **Push notifications** are stubbed (see `rideMatching.ts` TODO) — drivers currently only see new
-  requests while the app is open and polling Firestore. Add FCM tokens + a Cloud Function that
-  sends a push on new nearby requests, or drivers will miss rides when backgrounded.
-- **Payments** are cash-only, matching the screens you started from. Mobile money / card payment
-  is a separate integration (e.g. a local payment gateway) — not included here.
+- **Fare estimation** uses road distance from the self-hosted OSRM (with a straight-line haversine
+  fallback if the routing service is down), so recommended fares match real driving distance —
+  see `getRecommendedFare` in `pricing.ts`.
+- **Payments** are the manual driver-wallet flow described in the "Payments" section above: no
+  gateway, deposit + admin approval + auto commission deduction.
+- **Sentry** SDKs are wired into all four apps but need a real DSN (see `SENTRY_DSN` /
+  `VITE_SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN`) before errors actually get reported.
 
 ## Launch checklist
 
@@ -331,22 +321,28 @@ To finish setting this up:
 - [x] Real phone/OTP auth for riders and drivers
 - [x] Real pickup/destination coordinates end-to-end (map-picked, reverse-geocoded)
 - [x] Push notifications for drivers (new requests + ride assigned)
+- [x] Rider push notifications (chat messages, trip started/completed)
 - [x] Geo-filtered driver matching (drivers only query nearby geohash cells, not the whole city)
 - [x] Rider app: English/Lao/Chinese language support (driver app + admin dashboard still English-only)
 - [x] Driver app + admin dashboard: English/Lao/Chinese language support too
 - [x] Ratings (rider ↔ driver, post-trip) and trip history (rider app + driver earnings view)
-- [x] In-app rider ↔ driver chat (driver-side push notifications on new messages)
+- [x] In-app rider ↔ driver chat (push notifications both directions)
 - [x] Admin analytics/reports page (revenue, ride counts, active drivers, 7-day chart)
-- [ ] Real payment gateway — schema fields exist (`paymentMethod`, `paymentStatus`), but the
-      actual integration needs you to pick a provider first (see "Payments" section above)
+- [x] Payments = manual driver-wallet deposits (admin-approved) + auto commission deduction
 - [x] Driver wallet: commission auto-deduction, minimum-balance gate to go online, manual
       bank-QR top-up with admin approval (see "Driver wallet" section below)
 - [x] Self-hosted map stack (tiles, routing, geocoding) replacing Google Maps entirely —
       see "Self-hosted maps" section below
-- [ ] Road-distance fare estimates
-- [ ] Payment method beyond cash (if you want one)
-- [ ] Crash reporting / analytics (e.g. Sentry, Firebase Analytics)
-- [ ] Load-test the matching Cloud Function before a public launch
+- [x] Road-distance fare estimates (self-hosted OSRM, haversine fallback)
+- [x] Crash reporting — Sentry wired into all four apps with a live DSN:
+      backend `SENTRY_DSN` (VPS `.env`), dashboard `VITE_SENTRY_DSN`
+      (admin-dashboard/.env.production), apps `EXPO_PUBLIC_SENTRY_DSN`
+      (rider-app/.env, driver-app/.env, inlined at build time). Native-app
+      source maps still need `SENTRY_ORG` / `SENTRY_PROJECT` /
+      `SENTRY_AUTH_TOKEN` at build time for readable stack traces.
+- [x] Load-tested the deployed callables — `backend/scripts/load-test.ts` against
+      api.gofair.getvgo.com: 20 workers × 15s → 403 requests, 100% success, 26.9 req/s,
+      p95 ≈ 1.4s (every fare call exercises OSRM routing)
 - [ ] App Store / Play Store listings, screenshots, privacy policy page, support email
 
 ### Business & legal (not something I can do for you)

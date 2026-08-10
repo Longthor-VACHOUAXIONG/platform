@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../lib/firebaseConfig';
 
 export default function LoginPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +18,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // /login isn't wrapped in ProtectedRoute, so navigate explicitly —
+      // the auth listener flips ProtectedRoute to the admin layout next.
+      navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.message ?? t('login.signInFailed'));
     } finally {

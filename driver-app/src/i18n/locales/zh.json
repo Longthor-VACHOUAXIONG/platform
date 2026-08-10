@@ -4,7 +4,9 @@
     "submit": "提交",
     "back": "返回",
     "cash": "现金",
-    "min": "分钟"
+    "min": "分钟",
+    "error": "出错了",
+    "pleaseTryAgain": "请重试。"
   },
   "auth": {
     "signUpTagline": "注册后即可开始接收用车请求。",
@@ -38,7 +40,8 @@
     "waitingForRequests": "正在等待用车请求…",
     "makeAnOffer": "报价",
     "sendOffer": "发送报价",
-    "sending": "发送中…"
+    "sending": "发送中…",
+    "offerFailed": "报价发送失败"
   },
   "tripAwaiting": {
     "waitingForRider": "正在等待乘客选择司机…",
@@ -52,12 +55,15 @@
     "startTrip": "开始行程",
     "starting": "正在开始…",
     "completeTrip": "完成行程",
-    "completing": "正在完成…"
+    "completing": "正在完成…",
+    "startFailed": "无法开始行程",
+    "completeFailed": "无法完成行程"
   },
   "rating": {
     "rateYourRider": "为乘客评分",
     "howWasThisTrip": "本次行程感觉如何？",
-    "commentPlaceholder": "留下评论（可选）"
+    "commentPlaceholder": "留下评论（可选）",
+    "submitFailed": "评分提交失败"
   },
   "tripHistory": {
     "title": "收入",

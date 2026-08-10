@@ -22,7 +22,8 @@
   "protectedRoute": {
     "loading": "Loading…",
     "noAdminAccess": "Signed in, but this account doesn't have admin access.",
-    "askAdmin": "Ask an existing admin to grant it via the bootstrap script."
+    "askAdmin": "Ask an existing admin to grant it via the bootstrap script.",
+    "signOut": "Sign out"
   },
   "rides": {
     "title": "Live rides",

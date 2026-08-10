@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { reverseGeocodeLabel } from '../utils/geocode';
 import MainMenuModal from '../components/MainMenuModal';
+import { setUpPushNotifications, listenForForegroundPush } from '../api/pushNotifications';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -28,19 +29,35 @@ export default function HomeScreen({ navigation }: Props) {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocatingLabel(false);
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({});
-      const next = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
-      setRegion((r) => ({ ...r, ...next }));
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocatingLabel(false);
+          return;
+        }
+        const loc = await Location.getCurrentPositionAsync({});
+        const next = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        setRegion((r) => ({ ...r, ...next }));
 
-      const label = await reverseGeocodeLabel(next.latitude, next.longitude);
-      setPickupLabel(label);
-      setLocatingLabel(false);
+        const label = await reverseGeocodeLabel(next.latitude, next.longitude);
+        setPickupLabel(label);
+      } catch (err) {
+        // GPS can fail indoors / with no fix — fall back to the default
+        // region so the pickup card doesn't spin forever.
+        console.warn('Failed to locate rider', err);
+      } finally {
+        setLocatingLabel(false);
+      }
     })();
+
+    // Register for FCM so riders get chat/trip push notifications even when
+    // the app is backgrounded (token saved via registerRiderPushToken).
+    setUpPushNotifications().catch((err) => console.warn('Push setup failed', err));
+
+    // Foreground: FCM doesn't auto-show a system notification, so surface
+    // chat/trip updates with an in-app alert.
+    const unsubPush = listenForForegroundPush();
+    return unsubPush;
   }, []);
 
   const pickupParam = { label: pickupLabel, lat: region.latitude, lng: region.longitude };

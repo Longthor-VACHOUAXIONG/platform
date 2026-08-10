@@ -1,0 +1,17 @@
+# Secrets — never commit
+gofair-service-account.json
+webapikey.txt
+hetzner_vps.txt
+sentry.io_DSN.txt
+backend/scripts/serviceAccountKey.json
+backend/functions/node_modules/
+backend/functions/lib/
+admin-dashboard/dist/
+driver-app/dist/
+rider-app/dist/
+admin-dashboard/.env
+admin-dashboard/.env.*
+rider-app/.env
+rider-app/.env.*
+driver-app/.env
+driver-app/.env.*

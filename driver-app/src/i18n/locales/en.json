@@ -4,7 +4,9 @@
     "submit": "Submit",
     "back": "Back",
     "cash": "Cash",
-    "min": "min"
+    "min": "min",
+    "error": "Error",
+    "pleaseTryAgain": "Please try again."
   },
   "auth": {
     "signUpTagline": "Sign up to start receiving ride requests.",
@@ -38,7 +40,8 @@
     "waitingForRequests": "Waiting for ride requests…",
     "makeAnOffer": "Make an offer",
     "sendOffer": "Send offer",
-    "sending": "Sending…"
+    "sending": "Sending…",
+    "offerFailed": "Could not send offer"
   },
   "tripAwaiting": {
     "waitingForRider": "Waiting for the rider to choose a driver…",
@@ -52,12 +55,15 @@
     "startTrip": "Start trip",
     "starting": "Starting…",
     "completeTrip": "Complete trip",
-    "completing": "Completing…"
+    "completing": "Completing…",
+    "startFailed": "Could not start the trip",
+    "completeFailed": "Could not complete the trip"
   },
   "rating": {
     "rateYourRider": "Rate your rider",
     "howWasThisTrip": "How was this trip?",
-    "commentPlaceholder": "Leave a comment (optional)"
+    "commentPlaceholder": "Leave a comment (optional)",
+    "submitFailed": "Could not submit rating"
   },
   "tripHistory": {
     "title": "Earnings",

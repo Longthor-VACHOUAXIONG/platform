@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,11 +15,13 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { rideId, driverName, fare } = route.params;
   const [status, setStatus] = useState<'driver_assigned' | 'in_progress' | 'completed'>('driver_assigned');
+  const completedRef = useRef(false);
 
   useEffect(() => {
     const unsub = listenToRide(rideId, (ride: any) => {
       setStatus(ride.status);
-      if (ride.status === 'completed') {
+      if (ride.status === 'completed' && !completedRef.current) {
+        completedRef.current = true;
         navigation.replace('RateDriver', { rideId, driverName });
       }
     });

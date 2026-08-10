@@ -1,18 +1,24 @@
 {
   "name": "functions",
-  "engines": { "node": "20" },
+  "engines": {
+    "node": "20"
+  },
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
+    "start": "node lib/server.js",
     "serve": "npm run build && firebase emulators:start --only functions,firestore,auth",
     "shell": "npm run build && firebase functions:shell",
     "deploy": "firebase deploy --only functions"
   },
   "dependencies": {
+    "@sentry/node": "^10.69.0",
+    "express": "^4.21.2",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^5.0.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "typescript": "^5.5.4"
   },
   "private": true

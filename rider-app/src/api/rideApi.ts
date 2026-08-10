@@ -1,20 +1,16 @@
 import {
-  addDoc,
   collection,
   doc,
   onSnapshot,
   query,
-  serverTimestamp,
   where,
   orderBy,
   limit,
   getDocs,
-  GeoPoint,
   type DocumentData,
 } from '@react-native-firebase/firestore';
 import { httpsCallable } from '@react-native-firebase/functions';
 import { db, functions } from './firebaseConfig';
-import { geohashEncode } from '../utils/geohash';
 
 export type RideStatus =
   | 'searching'
@@ -44,32 +40,21 @@ export async function createRideRequest(params: {
   rideTypeId: string;
   requestedFare: number;
 }) {
-  const ref = await addDoc(collection(db, 'rideRequests'), {
-    riderId: params.riderId,
+  // The doc is created server-side by the `requestRide` callable (the VPS
+  // backend can't run Firestore triggers, so creation + nearby-driver
+  // matching + push notifications happen in this one call). The authenticated
+  // rider's uid is taken from their ID token, never from the payload.
+  const res = await httpsCallable<
+    Omit<typeof params, 'riderId'>,
+    { rideId: string }
+  >(functions, 'requestRide')({
     riderName: params.riderName,
-    pickup: { label: params.pickup.label, geo: new GeoPoint(params.pickup.lat, params.pickup.lng) },
-    destination: {
-      label: params.destination.label,
-      geo: new GeoPoint(params.destination.lat, params.destination.lng),
-    },
+    pickup: params.pickup,
+    destination: params.destination,
     rideTypeId: params.rideTypeId,
     requestedFare: params.requestedFare,
-    currency: 'LAK',
-    status: 'searching' as RideStatus,
-    assignedDriverId: null,
-    assignedFare: null,
-    // Cash-only for now — see README "Payments" for the extension point
-    // once you pick a digital payment provider.
-    paymentMethod: 'cash' as const,
-    paymentStatus: 'n/a' as const,
-    // Lets the driver app query "open requests near me" directly, instead of
-    // pulling every open request city-wide. The onRideRequestCreated Cloud
-    // Function recomputes this server-side too, as a sanity check.
-    geohashPrefix5: geohashEncode(params.pickup.lat, params.pickup.lng, 5),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
   });
-  return ref.id;
+  return res.data.rideId;
 }
 
 /** Live-subscribe to a single ride request's status. */
@@ -118,14 +103,15 @@ export type ChatMessage = {
   text: string;
 };
 
-/** Send a chat message on an active ride. */
-export async function sendMessage(rideId: string, senderId: string, text: string) {
-  await addDoc(collection(db, 'rideRequests', rideId, 'messages'), {
-    senderId,
-    senderRole: 'rider' as const,
-    text,
-    createdAt: serverTimestamp(),
-  });
+/** Send a chat message on an active ride. Goes through the `sendChatMessage`
+ * callable so the VPS backend can push a notification to the driver (the old
+ * Firestore-trigger-based push doesn't exist on a plain server). The sender
+ * is taken from the authenticated ID token, not passed by the client. */
+export async function sendMessage(rideId: string, text: string) {
+  await httpsCallable<{ rideId: string; text: string }, { ok: boolean }>(
+    functions,
+    'sendChatMessage'
+  )({ rideId, text });
 }
 
 /** Live-subscribe to a ride's chat, oldest first. */

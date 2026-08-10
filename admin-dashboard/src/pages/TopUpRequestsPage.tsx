@@ -55,6 +55,10 @@ export default function TopUpRequestsPage() {
     setBusyId(req.id);
     try {
       await reviewTopUpFn({ driverId: req.driverId, transactionId: req.id, approve });
+    } catch (err: any) {
+      // e.g. another admin already reviewed it, or the claim isn't in the
+      // token yet — tell the ops user instead of silently doing nothing.
+      window.alert(err.message ?? 'Failed to review this top-up.');
     } finally {
       setBusyId(null);
     }

@@ -27,8 +27,13 @@ export default function ChatScreen({ navigation, route }: Props) {
     if (!trimmed) return;
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-    setText('');
-    await sendMessage(rideId, uid, trimmed);
+    try {
+      await sendMessage(rideId, uid, trimmed);
+      setText('');
+    } catch (err) {
+      // Keep the typed text in the input so the driver can retry.
+      console.warn('Failed to send chat message', err);
+    }
   };
 
   return (

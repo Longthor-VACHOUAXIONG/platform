@@ -22,7 +22,8 @@
   "protectedRoute": {
     "loading": "加载中…",
     "noAdminAccess": "已登录，但该账户没有管理员权限。",
-    "askAdmin": "请让现有管理员通过初始化脚本授予权限。"
+    "askAdmin": "请让现有管理员通过初始化脚本授予权限。",
+    "signOut": "退出登录"
   },
   "rides": {
     "title": "实时行程",

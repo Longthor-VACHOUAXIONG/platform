@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, FlatList, Alert } from 'react-native';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -126,8 +126,12 @@ export default function ChooseDriverScreen({ navigation, route }: Props) {
               style={styles.confirmCancelButton}
               onPress={async () => {
                 setShowCancelConfirm(false);
-                await cancelRide({ rideId, reason: t('chooseDriver.cancelledFromPicker') });
-                navigation.popToTop();
+                try {
+                  await cancelRide({ rideId, reason: t('chooseDriver.cancelledFromPicker') });
+                  navigation.popToTop();
+                } catch (err: any) {
+                  Alert.alert(t('common.error'), err.message ?? t('common.pleaseTryAgain'));
+                }
               }}
             >
               <Text style={[typography.bodyBold, { color: colors.danger }]}>{t('searching.cancelRequest')}</Text>

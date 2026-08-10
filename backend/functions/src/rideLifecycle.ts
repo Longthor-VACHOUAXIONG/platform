@@ -15,6 +15,27 @@ export const registerPushToken = onCall(async (request) => {
   return { ok: true };
 });
 
+/** Rider registers their FCM push token (stored on `users/{uid}` so riders get
+ * pushes for chat/trip events while their app is backgrounded). */
+export const registerRiderPushToken = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+  const { pushToken } = request.data as { pushToken: string };
+  if (!pushToken) throw new HttpsError('invalid-argument', 'pushToken is required.');
+
+  // Merge so we don't clobber any existing rider profile fields; creates the
+  // doc if the rider hasn't been written to `users` yet.
+  await db.collection('users').doc(uid).set({ pushToken }, { merge: true });
+  return { ok: true };
+});
+
+/** Fetches a rider's push token from `users/{riderId}`. */
+async function getRiderPushToken(riderId: string): Promise<string | undefined> {
+  const riderDoc = await db.collection('users').doc(riderId).get();
+  return riderDoc.data()?.pushToken as string | undefined;
+}
+
 /** Driver submits a fare offer on an open ride request. */
 export const submitOffer = onCall(async (request) => {
   const uid = request.auth?.uid;
@@ -166,6 +187,18 @@ export const startTrip = onCall(async (request) => {
   }
 
   await rideRef.update({ status: 'in_progress', updatedAt: FieldValue.serverTimestamp() });
+
+  // Let the rider know their driver is on the way even if the app is
+  // backgrounded (chat/trip pushes use the same `users/{uid}.pushToken`).
+  const riderToken = await getRiderPushToken(ride.riderId);
+  if (riderToken) {
+    await sendPushToTokens([riderToken], {
+      title: 'Trip started',
+      body: 'Your driver is on the way.',
+      data: { type: 'trip_started', rideId },
+    });
+  }
+
   return { ok: true };
 });
 
@@ -218,6 +251,18 @@ export const completeTrip = onCall(async (request) => {
       reviewedBy: null,
     });
   });
+
+  const rideSnap = await rideRef.get();
+  const riderToken = rideSnap.data()?.riderId
+    ? await getRiderPushToken(rideSnap.data()!.riderId)
+    : undefined;
+  if (riderToken) {
+    await sendPushToTokens([riderToken], {
+      title: 'Trip complete',
+      body: 'Rate your driver and leave a review.',
+      data: { type: 'trip_completed', rideId },
+    });
+  }
 
   return { ok: true, commissionDeducted };
 });

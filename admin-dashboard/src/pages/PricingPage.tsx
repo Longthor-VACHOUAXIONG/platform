@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebaseConfig';
 
@@ -45,8 +45,16 @@ export default function PricingPage() {
   };
 
   const addZone = async () => {
-    if (!newZoneId.trim()) return;
-    await setDoc(doc(db, 'pricingConfig', newZoneId.trim()), { ...EMPTY_ZONE, zoneName: newZoneId.trim() });
+    const id = newZoneId.trim();
+    if (!id) return;
+    // Refuse to overwrite an existing zone's configured fares — setDoc with
+    // the same ID would silently reset the whole zone to defaults.
+    const existing = await getDoc(doc(db, 'pricingConfig', id));
+    if (existing.exists()) {
+      window.alert(`Zone "${id}" already exists — pick a different ID or edit the existing zone.`);
+      return;
+    }
+    await setDoc(doc(db, 'pricingConfig', id), { ...EMPTY_ZONE, zoneName: id });
     setNewZoneId('');
   };
 

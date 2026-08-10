@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { colors, brand, typography } from '../theme/theme';
+import { auth } from '../api/firebaseConfig';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -11,7 +12,11 @@ export default function SplashScreen({ navigation }: Props) {
 
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
-    const t = setTimeout(() => navigation.replace('Auth'), 1500);
+    const t = setTimeout(() => {
+      // Firebase Auth persists sessions — returning drivers should go
+      // straight home, not through the phone-OTP flow every launch.
+      navigation.replace(auth.currentUser ? 'Home' : 'Auth');
+    }, 1500);
     return () => clearTimeout(t);
   }, []);
 

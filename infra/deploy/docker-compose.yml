@@ -1,0 +1,25 @@
+# gofair app stack (backend only). The map stack lives separately on the host
+# (see infra/README.md "Self-hosted map stack") and Caddy reverse-proxies to it.
+#
+# The backend binds to 127.0.0.1:8081 and is exposed only via Caddy (on the
+# host), which terminates TLS for api.gofair.getvgo.com.
+#
+# Required env (put in a .env next to this file):
+#   GCLOUD_PROJECT=<firebase-project-id>   e.g. lao-taxi
+#   GCRED_JSON_PATH=/root/gofair/gofair-service-account.json  (absolute path on the host)
+
+services:
+  gofair-backend:
+    build:
+      context: ../../backend/functions
+    container_name: gofair-backend
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      GCLOUD_PROJECT: ${GCLOUD_PROJECT:?set GCLOUD_PROJECT in .env}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    volumes:
+      - ${GCRED_JSON_PATH}:/secrets/service-account.json:ro
+    ports:
+      - "127.0.0.1:8081:8080"

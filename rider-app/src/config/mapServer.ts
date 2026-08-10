@@ -1,8 +1,8 @@
-// Points at your own VPS running the Docker stack in /infra — see
-// /infra/README.md for setup. Swap these to a domain (with HTTPS) once you
-// move past testing — see /infra/README.md "Production hardening".
-const HOST = '178.105.31.74';
+// Points at the self-hosted map stack on the gofair VPS (see /infra/README.md).
+// Served over HTTPS behind Caddy at this domain so the mobile apps don't trip
+// iOS ATS / Android cleartext-traffic restrictions.
+const HOST = 'maps.gofair.getvgo.com';
 
-export const TILE_URL_TEMPLATE = `http://${HOST}/tile/{z}/{x}/{y}.png`;
-export const OSRM_BASE_URL = `http://${HOST}:5000`;
-export const NOMINATIM_BASE_URL = `http://${HOST}:8080`;
+export const TILE_URL_TEMPLATE = `https://${HOST}/tile/{z}/{x}/{y}.png`;
+export const OSRM_BASE_URL = `https://${HOST}`;
+export const NOMINATIM_BASE_URL = `https://${HOST}`;

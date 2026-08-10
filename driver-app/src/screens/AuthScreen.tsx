@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { signInWithPhoneNumber, type ConfirmationResult } from '@react-native-firebase/auth';
-import { doc, setDoc, serverTimestamp } from '@react-native-firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from '@react-native-firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, brand } from '../theme/theme';
 import { auth, db } from '../api/firebaseConfig';
@@ -72,20 +72,26 @@ export default function AuthScreen({ navigation }: Props) {
     if (!uid || !canSubmitProfile) return;
     setLoading(true);
     try {
-      await setDoc(doc(db, 'drivers', uid), {
-        name,
-        phone,
-        vehicleModel,
-        plateNumber,
-        verificationStatus: 'pending', // an admin approves this in the dashboard
-        rating: 5,
-        ratingCount: 0,
-        totalRides: 0,
-        isOnline: false,
-        currentLocation: null,
-        lastLocationAt: null,
-        createdAt: serverTimestamp(),
-      });
+      // A returning driver already has an approved profile, wallet balance,
+      // and ride history on this doc — a plain setDoc() would wipe all of
+      // that, so only create the profile for brand-new drivers.
+      const existing = await getDoc(doc(db, 'drivers', uid));
+      if (!existing.exists()) {
+        await setDoc(doc(db, 'drivers', uid), {
+          name,
+          phone,
+          vehicleModel,
+          plateNumber,
+          verificationStatus: 'pending', // an admin approves this in the dashboard
+          rating: 5,
+          ratingCount: 0,
+          totalRides: 0,
+          isOnline: false,
+          currentLocation: null,
+          lastLocationAt: null,
+          createdAt: serverTimestamp(),
+        });
+      }
       navigation.replace('Home');
     } catch (err: any) {
       Alert.alert(t('auth.signUpFailed'), err.message ?? t('auth.pleaseTryAgain'));

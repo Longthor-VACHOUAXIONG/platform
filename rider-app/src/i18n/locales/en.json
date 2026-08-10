@@ -7,7 +7,9 @@
     "back": "Back",
     "backToHome": "Back to home",
     "cash": "Cash",
-    "min": "min"
+    "min": "min",
+    "error": "Error",
+    "pleaseTryAgain": "Please try again."
   },
   "splash": {
     "tagline": "Your app for fair rides"
@@ -106,7 +108,8 @@
     "howWasYourTrip": "How was your trip?",
     "rateDriverName": "Rate {{driverName}}",
     "commentPlaceholder": "Leave a comment (optional)",
-    "submit": "Submit"
+    "submit": "Submit",
+    "submitFailed": "Could not submit rating"
   },
   "tripHistory": {
     "title": "Trip history",

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { colors, brand, typography } from '../theme/theme';
+import { auth } from '../api/firebaseConfig';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -17,7 +18,9 @@ export default function SplashScreen({ navigation }: Props) {
     }).start();
 
     const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
+      // Firebase Auth persists sessions — skip the sign-in flow for a
+      // returning rider instead of forcing re-auth on every launch.
+      navigation.replace(auth.currentUser ? 'Home' : 'Onboarding');
     }, 1800);
 
     return () => clearTimeout(timer);

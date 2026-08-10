@@ -7,7 +7,9 @@
     "back": "ກັບຄືນ",
     "backToHome": "ກັບໄປໜ້າຫຼັກ",
     "cash": "ເງິນສົດ",
-    "min": "ນາທີ"
+    "min": "ນາທີ",
+    "error": "ມີຂໍ້ຜິດພາດ",
+    "pleaseTryAgain": "ກະລຸນາລອງໃໝ່."
   },
   "splash": {
     "tagline": "ແອັບຂອງທ່ານສຳລັບການເດີນທາງທີ່ຍຸຕິທຳ"
@@ -106,7 +108,8 @@
     "howWasYourTrip": "ການເດີນທາງເປັນແນວໃດ?",
     "rateDriverName": "ໃຫ້ຄະແນນ {{driverName}}",
     "commentPlaceholder": "ຝາກຄຳຄິດເຫັນ (ບໍ່ບັງຄັບ)",
-    "submit": "ສົ່ງ"
+    "submit": "ສົ່ງ",
+    "submitFailed": "ບໍ່ສາມາດສົ່ງຄະແນນໄດ້"
   },
   "tripHistory": {
     "title": "ປະຫວັດການເດີນທາງ",

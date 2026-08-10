@@ -1,8 +1,18 @@
 import { registerRootComponent } from 'expo';
 import { setBackgroundMessageHandler } from '@react-native-firebase/messaging';
+import * as Sentry from '@sentry/react-native';
 import { messaging } from './src/api/firebaseConfig';
 
 import App from './App';
+
+// Error tracking — enabled only when EXPO_PUBLIC_SENTRY_DSN is set in the
+// build env (see Sentry docs for the Expo config plugin + sourcemap upload).
+if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    tracesSampleRate: 0.1,
+  });
+}
 
 // Must be registered outside the React tree, before the app mounts, so FCM
 // can deliver data-only messages while the app is fully backgrounded/killed.

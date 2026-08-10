@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, SafeAreaView, ActivityIndicator } from 'react-native';
 import OsmMapView, { type Region } from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,11 +24,16 @@ export default function SetDestinationScreen({ navigation, route }: Props) {
   });
   const [label, setLabel] = useState(t('setDestination.moveMapPrompt'));
   const [resolving, setResolving] = useState(false);
+  // Ignore stale reverse-geocode responses — a slow older request must not
+  // overwrite the label of a newer map position.
+  const geocodeSeq = useRef(0);
 
   const onRegionChangeComplete = async (next: Region) => {
+    const seq = ++geocodeSeq.current;
     setRegion(next);
     setResolving(true);
     const resolved = await reverseGeocodeLabel(next.latitude, next.longitude);
+    if (seq !== geocodeSeq.current) return;
     setLabel(resolved);
     setResolving(false);
   };
@@ -64,7 +69,8 @@ export default function SetDestinationScreen({ navigation, route }: Props) {
 
       <SafeAreaView style={styles.bottomBar}>
         <Pressable
-          style={styles.doneButton}
+          style={[styles.doneButton, resolving && styles.doneButtonDisabled]}
+          disabled={resolving}
           onPress={() =>
             navigation.navigate('ChooseRide', {
               pickup,
@@ -127,4 +133,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneText: { ...typography.h3 },
+  doneButtonDisabled: { opacity: 0.5 },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Switch, FlatList, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, Switch, FlatList, Modal, TextInput, Alert } from 'react-native';
 import OsmMapView, { Marker } from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -67,11 +67,18 @@ export default function HomeScreen({ navigation }: Props) {
   }, []);
 
   const lastSubscribedLocation = React.useRef<{ lat: number; lng: number } | null>(null);
+  // React tears down the previous effect's subscription before re-running
+  // this effect on every region change, so the unsubscribe must live in a
+  // ref — otherwise a tiny (<1km) GPS jitter would drop the live listener
+  // and never re-subscribe.
+  const openRequestsUnsub = React.useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!online) {
       setOpenRequests([]);
       lastSubscribedLocation.current = null;
+      openRequestsUnsub.current?.();
+      openRequestsUnsub.current = null;
       return;
     }
 
@@ -81,13 +88,19 @@ export default function HomeScreen({ navigation }: Props) {
       : Infinity;
 
     // Only re-subscribe once the driver has moved far enough that the
-    // nearby geohash cells might have changed — avoids tearing down and
-    // rebuilding the Firestore listener on every tiny GPS jitter.
+    // nearby geohash cells might have changed — avoids rebuilding the
+    // Firestore listener on every tiny GPS jitter.
     if (moved < 1) return;
 
     lastSubscribedLocation.current = here;
-    const unsub = listenToOpenRequests(here, (rides) => setOpenRequests(rides as OpenRideRequest[]));
-    return unsub;
+    openRequestsUnsub.current?.();
+    openRequestsUnsub.current = listenToOpenRequests(here, (rides) =>
+      setOpenRequests(rides as OpenRideRequest[])
+    );
+    return () => {
+      openRequestsUnsub.current?.();
+      openRequestsUnsub.current = null;
+    };
   }, [online, region.latitude, region.longitude]);
 
   const toggleOnline = async (value: boolean) => {
@@ -131,6 +144,8 @@ export default function HomeScreen({ navigation }: Props) {
       });
       setOfferTarget(null);
       navigation.navigate('TripAwaitingAcceptance', { rideId: offerTarget.id });
+    } catch (err: any) {
+      Alert.alert(t('home.offerFailed'), err.message ?? t('common.pleaseTryAgain'));
     } finally {
       setSubmitting(false);
     }

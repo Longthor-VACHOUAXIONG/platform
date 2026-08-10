@@ -1,0 +1,56 @@
+# Caddy reverse proxy for the gofair stack (gofair.getvgo.com) plus the
+# pre-existing map hosts (maps.getvgo.com / osrm.getvgo.com). Terminates TLS
+# (automatic Let's Encrypt). Requires DNS A records for the three gofair
+# subdomains -> 178.105.31.74. Runs on the host, NOT in Docker.
+
+# ---- GoFair: backend functions ----
+api.gofair.getvgo.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8081
+}
+
+# ---- GoFair: admin dashboard (Vite static build) ----
+gofair.getvgo.com {
+	encode gzip
+	root * /var/www/gofair
+	# SPA fallback: let react-router handle /drivers, /pricing, etc.
+	try_files {path} /index.html
+	file_server
+}
+
+# ---- GoFair: maps ----
+# The mobile apps use a single base URL and three path prefixes:
+#   /tile/{z}/{x}/{y}.png  -> raster tiles
+#   /route/v1/driving/...  -> OSRM directions
+#   /reverse?...           -> Nominatim reverse geocoding
+maps.gofair.getvgo.com {
+	encode gzip
+	# tileserver-gl actually serves /styles/{style}/{z}/{x}/{y}.png
+	handle_path /tile/* {
+		rewrite * /styles/osm-bright{path}
+		reverse_proxy 127.0.0.1:8080
+	}
+	handle /route/* {
+		reverse_proxy 127.0.0.1:5000
+	}
+	handle {
+		# Nominatim (reverse geocode + search)
+		reverse_proxy 127.0.0.1:8082
+	}
+}
+
+# ---- legacy hosts from the old nginx setup, behaviour preserved ----
+
+maps.getvgo.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8080
+}
+
+osrm.getvgo.com {
+	encode gzip
+	@no_token {
+		not header X-OSRM-Token SKWMv4e5ZHArs62Ul8pOIaJiwRhm7yjc
+	}
+	respond @no_token 403
+	reverse_proxy 127.0.0.1:5000
+}

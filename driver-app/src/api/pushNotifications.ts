@@ -8,6 +8,11 @@ const registerPushTokenFn = httpsCallable<{ pushToken: string }, { ok: boolean }
   'registerPushToken'
 );
 
+// setUpPushNotifications() runs on every HomeScreen mount; guard the token
+// refresh listener with a module flag so it isn't re-registered (and then
+// firing duplicate registerPushToken calls on every token rotation).
+let tokenRefreshRegistered = false;
+
 /**
  * Requests notification permission, gets an FCM token, and saves it to the
  * driver's Firestore doc via the registerPushToken Cloud Function. Call this
@@ -28,9 +33,12 @@ export async function setUpPushNotifications() {
   await registerPushTokenFn({ pushToken: token });
 
   // Keep the token fresh — FCM tokens can rotate.
-  onTokenRefresh(messaging, async (newToken) => {
-    await registerPushTokenFn({ pushToken: newToken });
-  });
+  if (!tokenRefreshRegistered) {
+    tokenRefreshRegistered = true;
+    onTokenRefresh(messaging, async (newToken) => {
+      await registerPushTokenFn({ pushToken: newToken });
+    });
+  }
 }
 
 /**

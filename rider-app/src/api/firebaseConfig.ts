@@ -23,9 +23,14 @@ import { getApp } from '@react-native-firebase/app';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore } from '@react-native-firebase/firestore';
 import { getFunctions } from '@react-native-firebase/functions';
+import { getMessaging } from '@react-native-firebase/messaging';
+import { FUNCTIONS_DOMAIN } from '../config/api';
 
 const app = getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app);
+// Custom-domain host: business logic runs on the gofair VPS, not on Google
+// Cloud Functions (see ../config/api.ts).
+export const functions = getFunctions(app, FUNCTIONS_DOMAIN);
+export const messaging = getMessaging(app);

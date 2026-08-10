@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '../theme/theme';
@@ -21,8 +21,11 @@ export default function RateRiderScreen({ navigation, route }: Props) {
     setSubmitting(true);
     try {
       await submitRating({ rideId, rating, comment: comment || undefined });
-    } finally {
       navigation.replace('Home');
+    } catch (err: any) {
+      Alert.alert(t('rating.submitFailed'), err.message ?? t('common.pleaseTryAgain'));
+    } finally {
+      setSubmitting(false);
     }
   };
 

@@ -11,6 +11,7 @@ Rider account.
   createdAt: Timestamp,
   rating: number,          // average rating given by drivers
   ratingCount: number,
+  pushToken?: string,      // FCM token, set via the registerRiderPushToken callable
 }
 ```
 
@@ -51,8 +52,10 @@ and by drivers submitting offers (via subcollection).
   status: 'searching' | 'offers_received' | 'driver_assigned' | 'in_progress' | 'completed' | 'cancelled',
   assignedDriverId: string | null,
   assignedFare: number | null,
-  paymentMethod: 'cash',       // extension point — see README "Payments" section
-  paymentStatus: 'n/a',        // becomes meaningful once a digital method exists
+  paymentMethod: 'wallet',    // ride money flows through the driver wallet:
+                             // driver deposits (manual, admin-approved) →
+                             // platform commission auto-cuts from the wallet
+  paymentStatus: 'n/a',       // becomes meaningful once a digital method exists
   geohashPrefix5: string,   // set client-side at creation, verified server-side — see geohash.ts
   cancelReason?: string,
   createdAt: Timestamp,

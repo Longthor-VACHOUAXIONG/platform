@@ -34,7 +34,11 @@ export default function DriversPage() {
   }, []);
 
   const setStatus = async (id: string, status: Driver['verificationStatus']) => {
-    await updateDoc(doc(db, 'drivers', id), { verificationStatus: status });
+    try {
+      await updateDoc(doc(db, 'drivers', id), { verificationStatus: status });
+    } catch (err: any) {
+      window.alert(err.message ?? 'Failed to update driver status.');
+    }
   };
 
   const visible = drivers.filter((d) => d.verificationStatus === tab);

@@ -7,7 +7,9 @@
     "back": "返回",
     "backToHome": "返回首页",
     "cash": "现金",
-    "min": "分钟"
+    "min": "分钟",
+    "error": "出错了",
+    "pleaseTryAgain": "请重试。"
   },
   "splash": {
     "tagline": "公平出行，由您决定"
@@ -105,7 +107,8 @@
     "howWasYourTrip": "本次行程感觉如何？",
     "rateDriverName": "为 {{driverName}} 评分",
     "commentPlaceholder": "留下评论（可选）",
-    "submit": "提交"
+    "submit": "提交",
+    "submitFailed": "评分提交失败"
   },
   "tripHistory": {
     "title": "行程记录",

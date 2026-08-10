@@ -19,8 +19,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({ user: null, isAdmin: false, loading: false });
         return;
       }
-      const token = await user.getIdTokenResult();
-      setState({ user, isAdmin: !!token.claims.admin, loading: false });
+      try {
+        const token = await user.getIdTokenResult();
+        setState({ user, isAdmin: !!token.claims.admin, loading: false });
+      } catch {
+        // Token refresh failed (network blip, etc.) — treat as not-an-admin
+        // rather than leaving the app stuck on the loading spinner forever.
+        setState({ user, isAdmin: false, loading: false });
+      }
     });
   }, []);
 

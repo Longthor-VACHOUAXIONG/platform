@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, Switch, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, Switch, Image, Alert } from 'react-native';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { formatFare } from '../utils/format';
 import { listenToOffers, cancelRide } from '../api/rideApi';
+import { doc, updateDoc } from '@react-native-firebase/firestore';
+import { db } from '../api/firebaseConfig';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -34,11 +36,17 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
   const [showCancelReasons, setShowCancelReasons] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
+  // Single countdown driver used by both the initial search and every
+  // "raise fare" restart, so the behaviour stays consistent: tick down,
+  // nudge the fake "drivers viewing" counter, and re-surface the raise-fare
+  // prompt when time runs out.
+  const startCountdown = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(timerRef.current!);
+          timerRef.current = null;
           setShowRaisePrompt(true);
           return 0;
         }
@@ -46,6 +54,10 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
       });
       setDriversViewing((d) => Math.min(14, d + 1));
     }, 1000);
+  };
+
+  useEffect(() => {
+    startCountdown();
 
     // Navigate to the driver-picker as soon as at least one real offer lands.
     const unsubOffers = listenToOffers(rideId, (offers) => {
@@ -58,16 +70,24 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
       if (timerRef.current) clearInterval(timerRef.current);
       unsubOffers();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Persist a fare change back to the ride doc so drivers and the backend
+  // see the new requested fare (the rider owns this doc, so a client-side
+  // update is allowed by firestore.rules).
+  const updateFare = (next: number) => {
+    setFare(next);
+    updateDoc(doc(db, 'rideRequests', rideId), { requestedFare: next }).catch((err) =>
+      console.warn('Failed to persist raised fare', err)
+    );
+  };
+
   const raiseFare = () => {
-    setFare((f) => f + RAISE_STEP);
+    updateFare(fare + RAISE_STEP);
     setShowRaisePrompt(false);
     setSecondsLeft(COUNTDOWN_SECONDS);
-    timerRef.current && clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setSecondsLeft((s) => (s <= 1 ? 0 : s - 1));
-    }, 1000);
+    startCountdown();
   };
 
   const progress = secondsLeft / COUNTDOWN_SECONDS;
@@ -104,11 +124,11 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.fareStepper}>
-          <Pressable style={styles.stepperBtn} onPress={() => setFare((f) => Math.max(FARE_STEP, f - FARE_STEP))}>
+          <Pressable style={styles.stepperBtn} onPress={() => updateFare(Math.max(FARE_STEP, fare - FARE_STEP))}>
             <Text style={styles.stepperBtnText}>−1,000</Text>
           </Pressable>
           <Text style={styles.fareAmount}>{formatFare(fare)}</Text>
-          <Pressable style={styles.stepperBtn} onPress={() => setFare((f) => f + FARE_STEP)}>
+          <Pressable style={styles.stepperBtn} onPress={() => updateFare(fare + FARE_STEP)}>
             <Text style={styles.stepperBtnText}>+1,000</Text>
           </Pressable>
         </View>
@@ -186,8 +206,12 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
               key={r.key}
               style={styles.reasonRow}
               onPress={async () => {
-                await cancelRide({ rideId, reason: t(`searching.${r.key}`) });
-                navigation.popToTop();
+                try {
+                  await cancelRide({ rideId, reason: t(`searching.${r.key}`) });
+                  navigation.popToTop();
+                } catch (err: any) {
+                  Alert.alert(t('common.error'), err.message ?? t('common.pleaseTryAgain'));
+                }
               }}
             >
               <Ionicons name={r.icon} size={20} color={colors.black} />

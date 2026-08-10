@@ -69,7 +69,15 @@ export default function WalletSettingsPage() {
   const save = async () => {
     setSaving(true);
     try {
-      await setDoc(doc(db, 'walletConfig', 'default'), config);
+      // Clamp commission to [0,1] and balance to >= 0 — the number input
+      // only guards the spinner arrows, typing "50" would otherwise set a
+      // 5000% commission and wipe drivers' wallets on their next trip.
+      const safe = {
+        ...config,
+        commissionRate: Math.min(1, Math.max(0, Number(config.commissionRate) || 0)),
+        minimumBalance: Math.max(0, Number(config.minimumBalance) || 0),
+      };
+      await setDoc(doc(db, 'walletConfig', 'default'), safe);
     } finally {
       setSaving(false);
     }

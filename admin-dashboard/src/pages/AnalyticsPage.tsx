@@ -51,20 +51,29 @@ export default function AnalyticsPage() {
   const activeDrivers = drivers.filter((d) => d.isOnline).length;
   const pendingApprovals = drivers.filter((d) => d.verificationStatus === 'pending').length;
 
-  // Bucket completed rides into the last 7 days for the chart.
-  const days: { label: string; count: number }[] = [];
+  // Bucket completed rides into calendar days for the last 7 days (a sliding
+  // 24h window misplaces rides near midnight into the wrong day's bar).
+  const dayStarts: Date[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     d.setHours(0, 0, 0, 0);
-    days.push({ label: dayLabel(d), count: 0 });
+    dayStarts.push(d);
   }
+  const days: { label: string; count: number }[] = dayStarts.map((d) => ({
+    label: dayLabel(d),
+    count: 0,
+  }));
   rides.forEach((r) => {
     const created = r.createdAt?.toDate?.();
     if (!created) return;
-    const daysAgo = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysAgo >= 0 && daysAgo < 7) {
-      days[6 - daysAgo].count += 1;
+    for (let i = 0; i < dayStarts.length; i++) {
+      const start = dayStarts[i].getTime();
+      const end = i < dayStarts.length - 1 ? dayStarts[i + 1].getTime() : start + 86400000;
+      if (created.getTime() >= start && created.getTime() < end) {
+        days[i].count += 1;
+        return;
+      }
     }
   });
 

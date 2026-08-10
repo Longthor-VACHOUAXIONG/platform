@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Pressable, Alert } from 'react-native';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
@@ -27,6 +27,8 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
     setBusy(true);
     try {
       await startTrip({ rideId });
+    } catch (err: any) {
+      Alert.alert(t('tripInProgress.startFailed'), err.message ?? t('common.pleaseTryAgain'));
     } finally {
       setBusy(false);
     }
@@ -37,6 +39,8 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
     try {
       await completeTrip({ rideId });
       navigation.replace('RateRider', { rideId });
+    } catch (err: any) {
+      Alert.alert(t('tripInProgress.completeFailed'), err.message ?? t('common.pleaseTryAgain'));
     } finally {
       setBusy(false);
     }

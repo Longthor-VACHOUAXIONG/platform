@@ -9,8 +9,19 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "@react-native-firebase/messaging",
-      "@maplibre/maplibre-react-native"
+      [
+        "@react-native-firebase/messaging",
+        {
+          "android": {
+            "notificationIcon": "./assets/notification-icon.png",
+            "notificationColor": "#B6F400"
+          }
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      "@sentry/react-native",
+      "expo-font",
+      "./plugins/withFirebaseNotificationIcon.js"
     ],
     "ios": {
       "supportsTablet": true,
@@ -30,7 +41,10 @@
     "android": {
       "package": "com.gofair.driver",
       "googleServicesFile": "./google-services.json",
-      "usesCleartextTraffic": true,
+      "notification": {
+        "icon": "./assets/notification-icon.png",
+        "color": "#B6F400"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

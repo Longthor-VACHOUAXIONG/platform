@@ -19,7 +19,13 @@
         }
       ],
       "@maplibre/maplibre-react-native",
-      "@sentry/react-native",
+      [
+        "@sentry/react-native",
+        {
+          "organization": "gofair",
+          "project": "react-native"
+        }
+      ],
       "expo-font",
       "./plugins/withFirebaseNotificationIcon.js"
     ],

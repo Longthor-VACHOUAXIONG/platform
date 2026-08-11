@@ -1,11 +1,11 @@
 import express from 'express';
 import * as Sentry from '@sentry/node';
 import { expressIntegration, setupExpressErrorHandler } from '@sentry/node';
-import { registerPushToken, registerRiderPushToken, submitOffer, acceptOffer, cancelRide, startTrip, completeTrip } from './rideLifecycle';
+import { registerPushToken, registerRiderPushToken, submitOffer, acceptOffer, declineOffer, cancelRide, startTrip, completeTrip } from './rideLifecycle';
 import { setAdminRole } from './admin';
 import { getRecommendedFare } from './pricing';
 import { submitRating } from './ratings';
-import { requestRide } from './rideMatching';
+import { requestRide, updateRequestedFare } from './rideMatching';
 import { sendChatMessage } from './chat';
 import { setOnlineStatus, requestTopUp, reviewTopUp, initiateBcelTopUp, bcelWebhook } from './wallet';
 import { recomputeAdminStats } from './analytics';
@@ -40,11 +40,13 @@ app.use(express.json({ limit: '1mb' }));
 
 const callables: Record<string, unknown> = {
   requestRide,
+  updateRequestedFare,
   sendChatMessage,
   registerPushToken,
   registerRiderPushToken,
   submitOffer,
   acceptOffer,
+  declineOffer,
   cancelRide,
   startTrip,
   completeTrip,

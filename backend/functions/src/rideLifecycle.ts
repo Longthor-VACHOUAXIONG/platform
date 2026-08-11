@@ -47,8 +47,11 @@ export const submitOffer = onCall(async (request) => {
     offeredFare: number;
     etaMinutes: number;
   };
-  if (!rideId || !offeredFare) {
-    throw new HttpsError('invalid-argument', 'rideId and offeredFare are required.');
+  if (!rideId || typeof offeredFare !== 'number' || !Number.isFinite(offeredFare) || offeredFare <= 0) {
+    throw new HttpsError('invalid-argument', 'rideId and a positive offeredFare are required.');
+  }
+  if (offeredFare > 50_000_000) {
+    throw new HttpsError('invalid-argument', 'offeredFare is unrealistically high.');
   }
 
   const driverDoc = await db.collection('drivers').doc(uid).get();
@@ -85,8 +88,7 @@ export const submitOffer = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Rider accepts a specific driver's offer. Declines all other pending offers. */
-export const acceptOffer = onCall(async (request) => {
+/** Rider accepts a specific driver's offer. Declines all other pending offers. */export const acceptOffer = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
@@ -141,6 +143,35 @@ export const acceptOffer = onCall(async (request) => {
       data: { type: 'ride_assigned', rideId },
     });
   }
+
+  return { ok: true };
+});
+
+/** Rider declines a specific driver's offer (e.g. fare too high), keeping the
+ * ride searching so other drivers can still offer. */
+export const declineOffer = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+  const { rideId, driverId } = request.data as { rideId: string; driverId: string };
+  if (!rideId || !driverId) {
+    throw new HttpsError('invalid-argument', 'rideId and driverId are required.');
+  }
+
+  const rideRef = db.collection('rideRequests').doc(rideId);
+  const rideDoc = await rideRef.get();
+  if (!rideDoc.exists) throw new HttpsError('not-found', 'Ride request not found.');
+  const ride = rideDoc.data()!;
+
+  if (ride.riderId !== uid) {
+    throw new HttpsError('permission-denied', 'Only the requesting rider can decline an offer.');
+  }
+  if (ride.status !== 'searching' && ride.status !== 'offers_received') {
+    throw new HttpsError('failed-precondition', 'This ride is no longer accepting offers.');
+  }
+
+  const offerRef = rideRef.collection('offers').doc(driverId);
+  await offerRef.update({ status: 'declined_by_rider' });
 
   return { ok: true };
 });

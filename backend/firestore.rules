@@ -109,13 +109,15 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly([
           'riderId', 'riderName', 'pickup', 'destination', 'rideTypeId', 'requestedFare',
           'currency', 'paymentMethod', 'paymentStatus', 'status', 'assignedDriverId',
-          'assignedFare', 'geohashPrefix5', 'createdAt', 'updatedAt', 'createdBy'
+          'assignedFare', 'geohashPrefix5', 'createdAt', 'updatedAt', 'createdBy',
+          'extraPassengers', 'childSeat', 'comment', 'zoneId', 'recommendedFare', 'minimumFare'
         ]);
 
-      // Riders can raise their own offered fare while searching (the app's
-      // only direct write). Status/driver changes go through Cloud Functions.
-      allow update: if isSignedIn() && resource.data.riderId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestedFare']);
+      // Fare changes while searching go through the updateRequestedFare Cloud
+      // Function, which re-validates the new fare against the server-computed
+      // min/max band. No direct client updates to the fare — a modified client
+      // could otherwise undercut the minimum or spam a huge fare.
+      allow update: if isAdmin();
       allow delete: if false;
 
       match /offers/{driverId} {

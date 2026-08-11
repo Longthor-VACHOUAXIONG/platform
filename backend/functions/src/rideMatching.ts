@@ -5,8 +5,14 @@ import { FieldValue, GeoPoint, type DocumentReference } from 'firebase-admin/fir
 import { getMessaging } from 'firebase-admin/messaging';
 import { db } from './firebaseAdmin';
 import { geohashEncode } from './geohash';
+import { ALLOWED_RIDE_TYPES, computeRecommendedFare } from './pricing';
 
 const SEARCH_RADIUS_KM = 5;
+// A rider may adjust their fare, but only within a band around the
+// server-computed recommended fare (km × admin per-km rate): between the
+// configured minimum and 2.5× the recommendation. This stops 1,000-kip
+// requests and 50,000,000-kip spam while still letting the market negotiate.
+const MAX_FARE_MULTIPLIER = 2.5;
 
 type RideForMatching = {
   pickup: { label: string; geo?: unknown; latitude?: number; longitude?: number };
@@ -97,18 +103,22 @@ export const requestRide = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
-  const { riderName, pickup, destination, rideTypeId, requestedFare } = request.data as {
-    riderName: string;
-    pickup: { label: string; lat: number; lng: number };
-    destination: { label: string; lat: number; lng: number };
-    rideTypeId: string;
-    requestedFare: number;
-  };
+  const { riderName, pickup, destination, rideTypeId, requestedFare, zoneId, extraPassengers, childSeat, comment } =
+    request.data as {
+      riderName: string;
+      pickup: { label: string; lat: number; lng: number };
+      destination: { label: string; lat: number; lng: number };
+      rideTypeId: string;
+      requestedFare: number;
+      zoneId?: string;
+      extraPassengers?: boolean;
+      childSeat?: boolean;
+      comment?: string;
+    };
 
   if (!riderName || !pickup?.label || !destination?.label || !rideTypeId || !requestedFare || requestedFare <= 0) {
     throw new HttpsError('invalid-argument', 'riderName, pickup, destination, rideTypeId, requestedFare are required.');
   }
-  const ALLOWED_RIDE_TYPES = ['ride', 'electro', 'moto', 'comfort'];
   const MAX_REQUESTED_FARE = 50_000_000;
   const isLat = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= -90 && v <= 90;
   const isLng = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= -180 && v <= 180;
@@ -129,6 +139,30 @@ export const requestRide = onCall(async (request) => {
   if (!isLat(pickup.lat) || !isLng(pickup.lng) || !isLat(destination.lat) || !isLng(destination.lng)) {
     throw new HttpsError('invalid-argument', 'Valid pickup/destination coordinates are required.');
   }
+  if (comment != null && (typeof comment !== 'string' || comment.length > 200)) {
+    throw new HttpsError('invalid-argument', 'comment must be a short string.');
+  }
+
+  // The server is the source of truth for what a fair fare looks like: km ×
+  // the admin's per-km rate for this ride type. Reject anything below the
+  // configured minimum or wildly above the recommendation instead of trusting
+  // whatever number the client shipped.
+  const recommended = await computeRecommendedFare({ pickup, destination, rideTypeId, zoneId });
+  const maxAllowed = Math.max(recommended.minimumFare * 2, Math.round(recommended.fare * MAX_FARE_MULTIPLIER / 500) * 500);
+  if (requestedFare < recommended.minimumFare) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Fare is below the ${recommended.minimumFare} minimum for this ride type.`,
+      { minimumFare: recommended.minimumFare }
+    );
+  }
+  if (requestedFare > maxAllowed) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Fare is too high for this distance (recommended ${recommended.fare}).`,
+      { recommendedFare: recommended.fare, maxAllowed }
+    );
+  }
 
   const rideRef = db.collection('rideRequests').doc();
   const ride = {
@@ -144,7 +178,15 @@ export const requestRide = onCall(async (request) => {
     destination: ride.destination,
     rideTypeId,
     requestedFare,
-    currency: 'LAK',
+    // Optional rider preferences from the options sheet — surfaced to the
+    // driver so they can see "child seat" / "4+ passengers" before accepting.
+    extraPassengers: extraPassengers === true,
+    childSeat: childSeat === true,
+    comment: comment ?? null,
+    zoneId: recommended.zoneId,
+    recommendedFare: recommended.fare,
+    minimumFare: recommended.minimumFare,
+    currency: recommended.currency,
     status: 'searching',
     assignedDriverId: null,
     assignedFare: null,
@@ -183,6 +225,50 @@ export const onRideRequestCreated = onDocumentCreated(
     await matchDriversAndNotify(snap.ref, ride as RideForMatching);
   }
 );
+
+/**
+ * Rider raises/lowers the fare on a ride that's still searching. The fare is
+ * re-validated server-side against the fare band computed at request time
+ * (min → 2.5× recommended), so a modified client can't undercut the minimum
+ * or spam a 50,000,000-kip fare via a raw Firestore write.
+ */
+export const updateRequestedFare = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+  const { rideId, requestedFare } = request.data as { rideId: string; requestedFare: number };
+  if (!rideId || typeof requestedFare !== 'number' || !Number.isFinite(requestedFare) || requestedFare <= 0) {
+    throw new HttpsError('invalid-argument', 'rideId and a positive requestedFare are required.');
+  }
+
+  const rideRef = db.collection('rideRequests').doc(rideId);
+  const rideDoc = await rideRef.get();
+  if (!rideDoc.exists) throw new HttpsError('not-found', 'Ride request not found.');
+  const ride = rideDoc.data()!;
+  if (ride.riderId !== uid) {
+    throw new HttpsError('permission-denied', 'Only the requesting rider can change the fare.');
+  }
+  if (ride.status !== 'searching' && ride.status !== 'offers_received') {
+    throw new HttpsError('failed-precondition', 'This ride is no longer searching.');
+  }
+
+  const minimumFare = typeof ride.minimumFare === 'number' && ride.minimumFare > 0 ? ride.minimumFare : 10000;
+  const recommended = typeof ride.recommendedFare === 'number' && ride.recommendedFare > 0 ? ride.recommendedFare : minimumFare;
+  const maxAllowed = Math.max(minimumFare * 2, Math.round(recommended * MAX_FARE_MULTIPLIER / 500) * 500);
+
+  if (requestedFare < minimumFare) {
+    throw new HttpsError('invalid-argument', `Fare is below the ${minimumFare} minimum.`, { minimumFare });
+  }
+  if (requestedFare > maxAllowed) {
+    throw new HttpsError('invalid-argument', `Fare is too high (recommended ${recommended}).`, {
+      recommendedFare: recommended,
+      maxAllowed,
+    });
+  }
+
+  await rideRef.update({ requestedFare, updatedAt: FieldValue.serverTimestamp() });
+  return { ok: true };
+});
 
 /**
  * Sends a push notification to a batch of FCM tokens, silently dropping any

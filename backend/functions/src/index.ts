@@ -8,11 +8,12 @@ Sentry.init({
   tracesSampleRate: 0.1,
 });
 
-export { onRideRequestCreated, requestRide } from './rideMatching';
+export { onRideRequestCreated, requestRide, updateRequestedFare } from './rideMatching';
 export { recomputeAdminStats } from './analytics';
 export {
   submitOffer,
   acceptOffer,
+  declineOffer,
   cancelRide,
   startTrip,
   completeTrip,

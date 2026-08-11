@@ -7,15 +7,27 @@ import {
   orderBy,
   limit,
   getDocs,
-  addDoc,
   updateDoc,
   GeoPoint,
   serverTimestamp,
   type DocumentData,
 } from '@react-native-firebase/firestore';
 import { httpsCallable } from '@react-native-firebase/functions';
-import { db, functions } from './firebaseConfig';
+import { ref, putFile, getDownloadURL } from '@react-native-firebase/storage';
+import { db, functions, storage } from './firebaseConfig';
 import { nearbyGeohashPrefixes } from '../utils/geohash';
+
+/**
+ * Uploads one driver-verification photo (ID/passport, driving license,
+ * vehicle, or selfie) to `driverVerification/{driverId}/{kind}/{timestamp}.jpg`
+ * and returns its download URL. Used during driver sign-up; the URLs are then
+ * stored on the driver doc so the admin can review them in the dashboard.
+ */
+export async function uploadVerificationPhoto(driverId: string, kind: string, localFileUri: string): Promise<string> {
+  const storageRef = ref(storage, `driverVerification/${driverId}/${kind}-${Date.now()}.jpg`);
+  await putFile(storageRef, localFileUri);
+  return getDownloadURL(storageRef);
+}
 
 /** Periodic location ping while online (call every ~5-10s from a location watcher). */
 export async function updateDriverLocation(uid: string, coords: { lat: number; lng: number }) {
@@ -94,15 +106,18 @@ export type ChatMessage = {
   text: string;
 };
 
-/** Send a chat message on an active ride. */
-export async function sendMessage(rideId: string, senderId: string, text: string) {
-  await addDoc(collection(db, 'rideRequests', rideId, 'messages'), {
-    senderId,
-    senderRole: 'driver' as const,
-    text,
-    createdAt: serverTimestamp(),
-  });
-}
+/**
+ * Send a chat message on an active ride. Goes through the `sendChatMessage`
+ * callable so the VPS backend can push a notification to the rider (Firestore
+ * triggers don't exist on the plain server, so a direct addDoc here would
+ * leave driver→rider messages unpushed). The sender is taken from the
+ * authenticated ID token, not passed by the client.
+ */
+export const sendMessage = (rideId: string, _senderId: string, text: string) =>
+  httpsCallable<{ rideId: string; text: string }, { ok: boolean }>(
+    functions,
+    'sendChatMessage'
+  )({ rideId, text });
 
 /** Live-subscribe to a ride's chat, oldest first. */
 export function listenToMessages(rideId: string, cb: (messages: (ChatMessage & { id: string })[]) => void) {

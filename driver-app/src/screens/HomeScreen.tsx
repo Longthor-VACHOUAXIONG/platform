@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Switch, FlatList, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch, FlatList, Modal, TextInput, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView, { Marker } from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -22,6 +23,7 @@ const DEFAULT_REGION = { latitude: 17.9757, longitude: 102.6331, latitudeDelta: 
 
 export default function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [online, setOnline] = useState(false);
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [openRequests, setOpenRequests] = useState<OpenRideRequest[]>([]);
@@ -157,7 +159,7 @@ export default function HomeScreen({ navigation }: Props) {
         <Marker coordinate={region} color={online ? '#1E9E4B' : colors.gray400} />
       </OsmMapView>
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top', 'left', 'right']}>
         <View style={styles.statusRow}>
           <Text style={typography.bodyBold}>{online ? t('home.youreOnline') : t('home.youreOffline')}</Text>
           <Switch value={online} onValueChange={toggleOnline} disabled={togglingOnline} />
@@ -190,7 +192,7 @@ export default function HomeScreen({ navigation }: Props) {
       </SafeAreaView>
 
       {online && (
-        <View style={styles.sheet}>
+        <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
           <Text style={styles.sheetTitle}>{t('home.nearbyRequests')}</Text>
           {openRequests.length === 0 ? (
             <Text style={styles.emptyText}>{t('home.waitingForRequests')}</Text>
@@ -212,12 +214,12 @@ export default function HomeScreen({ navigation }: Props) {
               )}
             />
           )}
-        </View>
+        </SafeAreaView>
       )}
 
       <Modal visible={!!offerTarget} transparent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setOfferTarget(null)} />
-        <View style={styles.modalSheet}>
+        <View style={[styles.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <Text style={typography.h3}>{t('home.makeAnOffer')}</Text>
           {offerTarget && (
             <Text style={[typography.body, { color: colors.gray600, marginTop: 4, marginBottom: spacing.md }]}>

@@ -27,6 +27,14 @@
         }
       ],
       "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos so you can add your ID and vehicle photos for driver verification.",
+          "cameraPermission": "The app uses your camera to take photos of your ID, driving license, vehicle, and selfie for driver verification.",
+          "microphonePermission": false
+        }
+      ],
       "./plugins/withFirebaseNotificationIcon.js",
       "./plugins/withMapLibreSupportLibFix.js"
     ],

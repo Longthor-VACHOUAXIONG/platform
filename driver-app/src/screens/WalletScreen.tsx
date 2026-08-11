@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { formatFare } from '../utils/format';
@@ -76,7 +77,7 @@ export default function WalletScreen({ navigation }: Props) {
       <FlatList
         data={transactions}
         keyExtractor={(t) => t.id}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl }}
         ListEmptyComponent={
           <Text style={[typography.body, { color: colors.gray600, textAlign: 'center', marginTop: spacing.lg }]}>
             No transactions yet.

@@ -1,9 +1,14 @@
 import { registerRootComponent } from 'expo';
 import { setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import * as Sentry from '@sentry/react-native';
+import { installGlobalErrorHandler } from './src/components/ErrorOverlay';
 import { messaging } from './src/api/firebaseConfig';
 
 import App from './App';
+
+// Show uncaught JS errors on-screen (with a stack) instead of silently closing
+// in release builds — invaluable when testing without adb access.
+installGlobalErrorHandler();
 
 // Error tracking — enabled only when EXPO_PUBLIC_SENTRY_DSN is set in the
 // build env (see Sentry docs for the Expo config plugin + sourcemap upload).

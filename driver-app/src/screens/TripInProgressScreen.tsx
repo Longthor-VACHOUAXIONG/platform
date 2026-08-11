@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
@@ -53,7 +54,7 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
         initialRegion={{ latitude: 17.98, longitude: 102.63, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
       />
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top']}>
         <Pressable
           style={styles.chatButton}
           onPress={() => navigation.navigate('Chat', { rideId, otherPartyName: ride?.riderName ?? t('tripInProgress.riderFallback') })}
@@ -62,7 +63,7 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
         </Pressable>
       </SafeAreaView>
 
-      <SafeAreaView style={styles.sheet}>
+      <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <Text style={typography.h2}>{ride?.riderName ?? t('tripInProgress.riderFallback')}</Text>
         <Text style={[typography.body, { color: colors.gray600, marginTop: 4 }]}>
           {ride ? formatFare(ride.assignedFare) : ''} · {t('common.cash')}

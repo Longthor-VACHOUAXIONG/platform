@@ -12,6 +12,10 @@ type Driver = {
   verificationStatus: 'pending' | 'approved' | 'rejected';
   rating: number;
   totalRides: number;
+  idPhotoUrl?: string;
+  licensePhotoUrl?: string;
+  vehiclePhotoUrl?: string;
+  selfiePhotoUrl?: string;
 };
 
 const TABS = ['pending', 'approved', 'rejected'] as const;
@@ -20,6 +24,15 @@ const TAB_KEY: Record<(typeof TABS)[number], string> = {
   approved: 'tabApproved',
   rejected: 'tabRejected',
 };
+
+// The four reference photos a driver uploads at sign-up, in the order they
+// appear on the card. Missing photos are simply skipped.
+const PHOTO_FIELDS: { field: 'idPhotoUrl' | 'licensePhotoUrl' | 'vehiclePhotoUrl' | 'selfiePhotoUrl'; labelKey: string }[] = [
+  { field: 'idPhotoUrl', labelKey: 'photoId' },
+  { field: 'licensePhotoUrl', labelKey: 'photoLicense' },
+  { field: 'vehiclePhotoUrl', labelKey: 'photoVehicle' },
+  { field: 'selfiePhotoUrl', labelKey: 'photoSelfie' },
+];
 
 export default function DriversPage() {
   const { t } = useTranslation();
@@ -69,6 +82,27 @@ export default function DriversPage() {
             <p>
               {d.vehicleModel} · {d.plateNumber}
             </p>
+            {(() => {
+              const photos = PHOTO_FIELDS.filter((p) => d[p.field]);
+              if (photos.length === 0) return <p className="muted">{t('drivers.noPhotos')}</p>;
+              return (
+                <div className="photo-grid">
+                  {photos.map((p) => (
+                    <a
+                      key={p.field}
+                      className="photo-tile"
+                      href={d[p.field]}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={t(`drivers.${p.labelKey}`)}
+                    >
+                      <img src={d[p.field]} alt={t(`drivers.${p.labelKey}`)} loading="lazy" />
+                      <span>{t(`drivers.${p.labelKey}`)}</span>
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
             {tab === 'pending' && (
               <div className="action-row">
                 <button className="btn-primary" onClick={() => setStatus(d.id, 'approved')}>

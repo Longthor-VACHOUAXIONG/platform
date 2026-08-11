@@ -1,15 +1,27 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, onSnapshot } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { db } from '../lib/firebaseConfig';
+import { db, functions } from '../lib/firebaseConfig';
 
-type Ride = {
-  id: string;
-  status: string;
-  assignedFare: number | null;
-  currency: string;
-  createdAt: { toDate: () => Date } | null;
+type RideStats = {
+  completedRides?: number;
+  grossRevenueKip?: number;
+  commissionKip?: number;
+  byRideType?: Record<string, { completedRides?: number; grossRevenueKip?: number; commissionKip?: number }>;
+  recomputedAt?: { toDate: () => Date };
+};
+
+type WalletStats = {
+  topUpCount?: number;
+  topUpApprovedKip?: number;
+};
+
+type DayStats = {
+  completedRides?: number;
+  grossRevenueKip?: number;
+  commissionKip?: number;
 };
 
 type Driver = {
@@ -18,64 +30,90 @@ type Driver = {
   verificationStatus: 'pending' | 'approved' | 'rejected';
 };
 
+const RIDE_TYPE_ORDER = ['ride', 'electro', 'moto', 'comfort'];
+
+const recomputeStatsFn = httpsCallable<Record<string, never>, { ok: boolean }>(functions, 'recomputeAdminStats');
+
 function dayLabel(date: Date) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
-  const [rides, setRides] = useState<Ride[]>([]);
+  const [rides, setRides] = useState<RideStats | null>(null);
+  const [wallets, setWallets] = useState<WalletStats | null>(null);
+  const [days, setDays] = useState<{ key: string; stats: DayStats }[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [recomputing, setRecomputing] = useState(false);
 
   useEffect(() => {
-    const ridesQuery = query(
-      collection(db, 'rideRequests'),
-      where('status', '==', 'completed'),
-      orderBy('createdAt', 'desc'),
-      limit(500)
-    );
-    const unsubRides = onSnapshot(ridesQuery, (snap) => {
-      setRides(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Ride)));
+    const unsubRides = onSnapshot(doc(db, 'adminStats', 'rides'), (snap) => {
+      setRides(snap.exists() ? (snap.data() as RideStats) : null);
+    });
+    const unsubWallets = onSnapshot(doc(db, 'adminStats', 'wallets'), (snap) => {
+      setWallets(snap.exists() ? (snap.data() as WalletStats) : null);
     });
     const unsubDrivers = onSnapshot(collection(db, 'drivers'), (snap) => {
       setDrivers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Driver)));
     });
+
+    // Daily buckets for the chart. The backend keys these by the business's
+    // local calendar day (Asia/Vientiane), so no timezone math is needed here.
+    const dayKeys: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dayKeys.push(`${year}-${month}-${day}`);
+    }
+    const unsubs = dayKeys.map((key) =>
+      onSnapshot(doc(db, 'adminStatsDaily', key), (snap) => {
+        setDays((prev) => {
+          const stats = snap.exists() ? (snap.data() as DayStats) : { completedRides: 0, grossRevenueKip: 0, commissionKip: 0 };
+          return prev.some((d) => d.key === key)
+            ? prev.map((d) => (d.key === key ? { key, stats } : d))
+            : [...prev, { key, stats }];
+        });
+      })
+    );
+
     return () => {
       unsubRides();
+      unsubWallets();
       unsubDrivers();
+      unsubs.forEach((u) => u());
     };
   }, []);
 
-  const totalRevenue = rides.reduce((sum, r) => sum + (r.assignedFare ?? 0), 0);
-  const currency = rides[0]?.currency ?? 'LAK';
+  const recompute = async () => {
+    setRecomputing(true);
+    try {
+      const res = await recomputeStatsFn({});
+      const { ok, truncated } = res.data as { ok: boolean; truncated: boolean };
+      if (ok && truncated) {
+        window.alert(t('analytics.recomputeTruncated'));
+      }
+    } catch (err: any) {
+      window.alert(err.message ?? t('analytics.recomputeFailed'));
+    } finally {
+      setRecomputing(false);
+    }
+  };
+
+  const currency = 'LAK';
   const activeDrivers = drivers.filter((d) => d.isOnline).length;
   const pendingApprovals = drivers.filter((d) => d.verificationStatus === 'pending').length;
 
-  // Bucket completed rides into calendar days for the last 7 days (a sliding
-  // 24h window misplaces rides near midnight into the wrong day's bar).
-  const dayStarts: Date[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    dayStarts.push(d);
-  }
-  const days: { label: string; count: number }[] = dayStarts.map((d) => ({
-    label: dayLabel(d),
-    count: 0,
-  }));
-  rides.forEach((r) => {
-    const created = r.createdAt?.toDate?.();
-    if (!created) return;
-    for (let i = 0; i < dayStarts.length; i++) {
-      const start = dayStarts[i].getTime();
-      const end = i < dayStarts.length - 1 ? dayStarts[i + 1].getTime() : start + 86400000;
-      if (created.getTime() >= start && created.getTime() < end) {
-        days[i].count += 1;
-        return;
-      }
-    }
-  });
+  const chartDays = [...days]
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map(({ key, stats }) => ({
+      label: dayLabel(new Date(`${key}T12:00:00`)),
+      count: stats.completedRides ?? 0,
+    }));
+
+  const hasStats = rides != null || wallets != null;
 
   return (
     <div>
@@ -86,13 +124,24 @@ export default function AnalyticsPage() {
 
       <div className="stat-grid">
         <div className="stat-card">
-          <p className="muted">{t('analytics.totalRevenue')}</p>
-          <h2>{currency}{totalRevenue.toLocaleString()}</h2>
+          <p className="muted">{t('analytics.commissionRevenue')}</p>
+          <h2>{currency}{(rides?.commissionKip ?? 0).toLocaleString()}</h2>
         </div>
         <div className="stat-card">
           <p className="muted">{t('analytics.completedRides')}</p>
-          <h2>{rides.length}</h2>
+          <h2>{(rides?.completedRides ?? 0).toLocaleString()}</h2>
         </div>
+        <div className="stat-card">
+          <p className="muted">{t('analytics.grossVolume')}</p>
+          <h2>{currency}{(rides?.grossRevenueKip ?? 0).toLocaleString()}</h2>
+        </div>
+        <div className="stat-card">
+          <p className="muted">{t('analytics.topUpVolume')}</p>
+          <h2>{currency}{(wallets?.topUpApprovedKip ?? 0).toLocaleString()}</h2>
+        </div>
+      </div>
+
+      <div className="stat-grid">
         <div className="stat-card">
           <p className="muted">{t('analytics.activeDrivers')}</p>
           <h2>{activeDrivers}</h2>
@@ -103,10 +152,49 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {!hasStats && (
+        <div className="chart-card">
+          <h3>{t('analytics.noStatsYet')}</h3>
+          <p className="muted" style={{ marginBottom: 12 }}>{t('analytics.noStatsHint')}</p>
+          <button className="btn-primary" disabled={recomputing} onClick={recompute}>
+            {recomputing ? t('analytics.recomputing') : t('analytics.recompute')}
+          </button>
+        </div>
+      )}
+
+      {rides?.byRideType && Object.keys(rides.byRideType).length > 0 && (
+        <div className="chart-card">
+          <h3>{t('analytics.byRideType')}</h3>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{t('analytics.rideType')}</th>
+                <th>{t('analytics.completedRides')}</th>
+                <th>{t('analytics.grossVolume')}</th>
+                <th>{t('analytics.commissionRevenue')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RIDE_TYPE_ORDER.filter((rt) => rides.byRideType?.[rt]).map((rt) => {
+                const s = rides.byRideType![rt];
+                return (
+                  <tr key={rt}>
+                    <td>{t(`analytics.rideTypes.${rt}`)}</td>
+                    <td>{s.completedRides ?? 0}</td>
+                    <td>{currency}{(s.grossRevenueKip ?? 0).toLocaleString()}</td>
+                    <td>{currency}{(s.commissionKip ?? 0).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="chart-card">
         <h3>{t('analytics.ridesLast7Days')}</h3>
         <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={days}>
+          <BarChart data={chartDays}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
             <XAxis dataKey="label" fontSize={12} />
             <YAxis allowDecimals={false} fontSize={12} />
@@ -115,6 +203,14 @@ export default function AnalyticsPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {hasStats && (
+        <div style={{ marginTop: 12 }}>
+          <button className="btn-secondary" disabled={recomputing} onClick={recompute}>
+            {recomputing ? t('analytics.recomputing') : t('analytics.recompute')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

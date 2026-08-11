@@ -53,7 +53,13 @@
     "reject": "拒绝",
     "moveBackToPending": "移回待审核",
     "revokeApproval": "撤销批准",
-    "noneInTab": "暂无{{tab}}的司机。"
+    "noneInTab": "暂无{{tab}}的司机。",
+    "verificationPhotos": "认证照片",
+    "photoId": "身份证/护照",
+    "photoLicense": "驾驶证",
+    "photoVehicle": "车辆",
+    "photoSelfie": "自拍照",
+    "noPhotos": "未上传照片"
   },
   "pricing": {
     "title": "定价",
@@ -70,11 +76,27 @@
   "analytics": {
     "title": "数据分析",
     "tagline": "业务表现一览。",
-    "totalRevenue": "总收入（已完成行程）",
+    "commissionRevenue": "佣金收入",
     "completedRides": "已完成行程数",
+    "grossVolume": "总车费流水",
+    "topUpVolume": "已批准充值总额",
     "activeDrivers": "当前在线司机数",
     "pendingApprovals": "待审核司机数",
-    "ridesLast7Days": "过去7天已完成行程"
+    "noStatsYet": "暂无统计数据",
+    "noStatsHint": "统计由后端维护。点击按钮从行程和充值记录计算。",
+    "recompute": "重新计算统计",
+    "recomputing": "计算中…",
+    "recomputeTruncated": "计算达到扫描上限，数字可能不完整。请在更多活动后重试。",
+    "recomputeFailed": "重新计算失败。",
+    "ridesLast7Days": "过去7天已完成行程",
+    "byRideType": "按车型分类",
+    "rideType": "车型",
+    "rideTypes": {
+      "ride": "轿车",
+      "electro": "电动车",
+      "moto": "摩托车",
+      "comfort": "舒适"
+    }
   },
   "wallet": {
     "title": "钱包设置",

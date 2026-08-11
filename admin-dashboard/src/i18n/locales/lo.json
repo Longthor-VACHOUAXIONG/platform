@@ -53,7 +53,13 @@
     "reject": "ປະຕິເສດ",
     "moveBackToPending": "ຍ້າຍກັບໄປລໍຖ້າ",
     "revokeApproval": "ຖອນການອະນຸມັດ",
-    "noneInTab": "ບໍ່ມີຄົນຂັບ {{tab}}."
+    "noneInTab": "ບໍ່ມີຄົນຂັບ {{tab}}.",
+    "verificationPhotos": "ຮູບພາຍໃນການຢືນຢັນ",
+    "photoId": "ບັດປະຈຳຕົວ / ໜັງສືຜ່ານແດນ",
+    "photoLicense": "ໃບຂັບຂີ່",
+    "photoVehicle": "ລົດ",
+    "photoSelfie": "ເຊວຟີ",
+    "noPhotos": "ບໍ່ມີການເພີ່ມຮູບ"
   },
   "pricing": {
     "title": "ລາຄາ",
@@ -70,11 +76,27 @@
   "analytics": {
     "title": "ການວິເຄາະ",
     "tagline": "ພາບລວມຂອງທຸລະກິດ.",
-    "totalRevenue": "ລາຍໄດ້ລວມ (ຖ້ຽວທີ່ສຳເລັດແລ້ວ)",
+    "commissionRevenue": "ຄ່ານາຍໜ້າທີ່ໄດ້ຮັບ",
     "completedRides": "ຖ້ຽວທີ່ສຳເລັດແລ້ວ",
+    "grossVolume": "ມູນຄ່າລວມຂອງຄ່າໂດຍສານ",
+    "topUpVolume": "ຍອດເຕີມເງິນທີ່ອະນຸມັດແລ້ວ",
     "activeDrivers": "ຄົນຂັບທີ່ອອນລາຍຕອນນີ້",
     "pendingApprovals": "ຄົນຂັບທີ່ລໍຖ້າອະນຸມັດ",
-    "ridesLast7Days": "ຖ້ຽວທີ່ສຳເລັດ, 7 ວັນທີ່ຜ່ານມາ"
+    "noStatsYet": "ຍັງບໍ່ມີສະຖິຕິ",
+    "noStatsHint": "ຕົວເລກຖືກຄຸ້ມຄອງໂດຍ Backend. ກົດປຸ່ມເພື່ອຄຳນວນຈາກປະຫວັດການໂດຍສານ ແລະ ການເຕີມເງິນ.",
+    "recompute": "ຄຳນວນສະຖິຕິໃໝ່",
+    "recomputing": "ກຳລັງຄຳນວນ…",
+    "recomputeTruncated": "ການຄຳນວນໄປຮອດຂອບເຂດ, ຕົວເລກອາດບໍ່ຄົບ. ລອງໃໝ່ຫຼັງຈາກມີກິດຈະກຳເພີ່ມ.",
+    "recomputeFailed": "ການຄຳນວນສະຖິຕິລົ້ມເຫຼວ.",
+    "ridesLast7Days": "ຖ້ຽວທີ່ສຳເລັດ, 7 ວັນທີ່ຜ່ານມາ",
+    "byRideType": "ລາຍລະອຽດຕາມປະເພດລົດ",
+    "rideType": "ປະເພດລົດ",
+    "rideTypes": {
+      "ride": "ລົດ",
+      "electro": "ລົດໄຟຟ້າ",
+      "moto": "ລົດຈັກ",
+      "comfort": "ລົດສະດວກ"
+    }
   },
   "wallet": {
     "title": "ຕັ້ງຄ່າກະເປົາເງິນ",

@@ -53,7 +53,13 @@
     "reject": "Reject",
     "moveBackToPending": "Move back to pending",
     "revokeApproval": "Revoke approval",
-    "noneInTab": "No {{tab}} drivers."
+    "noneInTab": "No {{tab}} drivers.",
+    "verificationPhotos": "Verification photos",
+    "photoId": "ID / passport",
+    "photoLicense": "Driving license",
+    "photoVehicle": "Vehicle",
+    "photoSelfie": "Selfie",
+    "noPhotos": "No photos uploaded"
   },
   "pricing": {
     "title": "Pricing",
@@ -70,11 +76,27 @@
   "analytics": {
     "title": "Analytics",
     "tagline": "Business performance at a glance.",
-    "totalRevenue": "Total revenue (completed trips)",
+    "commissionRevenue": "Commission revenue",
     "completedRides": "Completed rides",
+    "grossVolume": "Gross fare volume",
+    "topUpVolume": "Approved top-up volume",
     "activeDrivers": "Active drivers now",
     "pendingApprovals": "Pending driver approvals",
-    "ridesLast7Days": "Completed rides, last 7 days"
+    "noStatsYet": "No stats yet",
+    "noStatsHint": "Counters are maintained by the backend. Press the button to compute them from ride and top-up history.",
+    "recompute": "Recompute stats",
+    "recomputing": "Recomputing…",
+    "recomputeTruncated": "The recompute hit the scan cap, so numbers may be incomplete. Re-run after more activity.",
+    "recomputeFailed": "Failed to recompute stats.",
+    "ridesLast7Days": "Completed rides, last 7 days",
+    "byRideType": "Breakdown by ride type",
+    "rideType": "Ride type",
+    "rideTypes": {
+      "ride": "Ride",
+      "electro": "Electro",
+      "moto": "Moto",
+      "comfort": "Comfort"
+    }
   },
   "wallet": {
     "title": "Wallet settings",

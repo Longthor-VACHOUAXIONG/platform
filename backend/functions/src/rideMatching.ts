@@ -108,11 +108,26 @@ export const requestRide = onCall(async (request) => {
   if (!riderName || !pickup?.label || !destination?.label || !rideTypeId || !requestedFare || requestedFare <= 0) {
     throw new HttpsError('invalid-argument', 'riderName, pickup, destination, rideTypeId, requestedFare are required.');
   }
-  if (typeof pickup.lat !== 'number' || typeof pickup.lng !== 'number') {
-    throw new HttpsError('invalid-argument', 'pickup coordinates are required.');
+  const ALLOWED_RIDE_TYPES = ['ride', 'electro', 'moto', 'comfort'];
+  const MAX_REQUESTED_FARE = 50_000_000;
+  const isLat = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= -90 && v <= 90;
+  const isLng = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= -180 && v <= 180;
+
+  if (typeof riderName !== 'string' || riderName.trim().length === 0 || riderName.length > 120) {
+    throw new HttpsError('invalid-argument', 'A valid riderName is required.');
   }
-  if (typeof destination.lat !== 'number' || typeof destination.lng !== 'number') {
-    throw new HttpsError('invalid-argument', 'destination coordinates are required.');
+  if (typeof pickup.label !== 'string' || pickup.label.length === 0 || pickup.label.length > 200 ||
+      typeof destination.label !== 'string' || destination.label.length === 0 || destination.label.length > 200) {
+    throw new HttpsError('invalid-argument', 'pickup and destination labels are required.');
+  }
+  if (!ALLOWED_RIDE_TYPES.includes(rideTypeId)) {
+    throw new HttpsError('invalid-argument', 'Unknown rideTypeId.');
+  }
+  if (typeof requestedFare !== 'number' || !Number.isFinite(requestedFare) || requestedFare <= 0 || requestedFare > MAX_REQUESTED_FARE) {
+    throw new HttpsError('invalid-argument', 'requestedFare must be a positive amount within limits.');
+  }
+  if (!isLat(pickup.lat) || !isLng(pickup.lng) || !isLat(destination.lat) || !isLng(destination.lng)) {
+    throw new HttpsError('invalid-argument', 'Valid pickup/destination coordinates are required.');
   }
 
   const rideRef = db.collection('rideRequests').doc();

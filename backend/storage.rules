@@ -17,5 +17,15 @@ service firebase.storage {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
+
+    // Driver-verification photos (ID/passport, driving license, vehicle,
+    // selfie) uploaded during sign-up for admin reference checks.
+    // Only the driver who owns the folder, or an admin, can read them;
+    // only the driver can upload into their own folder.
+    match /driverVerification/{driverId}/{fileName} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == driverId || request.auth.token.admin == true);
+      allow write: if request.auth != null && request.auth.uid == driverId;
+    }
   }
 }

@@ -19,7 +19,18 @@ service cloud.firestore {
     // ---- Riders ----
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow create: if isOwner(uid);
+      // Riders create their own profile once. Create is pinned to the allowed
+      // fields and forced into a safe state so a rider can't self-assign a
+      // rating they didn't earn (rating/ratingCount are the fields drivers
+      // update via submitRating, and an attacker must not be able to create
+      // them with forged values).
+      allow create: if isOwner(uid) &&
+        request.resource.data.role == 'rider' &&
+        request.resource.data.rating == 5 &&
+        request.resource.data.ratingCount == 0 &&
+        request.resource.data.keys().hasOnly([
+          'role', 'name', 'phone', 'createdAt', 'rating', 'ratingCount', 'pushToken'
+        ]);
       // Riders can edit their own profile info, but not their own rating —
       // that's only ever written by the submitRating Cloud Function.
       allow update: if isAdmin() ||
@@ -30,11 +41,32 @@ service cloud.firestore {
 
     // ---- Drivers ----
     match /drivers/{uid} {
-      // Riders need to read driver profile fields (name, rating, vehicle) while
-      // an offer is pending, so allow read to any signed-in user; lock down
-      // writes to the driver themself or admin.
-      allow read: if isSignedIn();
-      allow create: if isOwner(uid);
+      // PII lock-down: a driver's doc (phone, plate number, verification
+      // photos, live location) is visible only to the driver themself or an
+      // admin. The rider app renders driver details from the offer doc (which
+      // the offer flow copies name/vehicle/rating into) and never reads this
+      // collection directly.
+      allow read: if isOwner(uid) || isAdmin();
+      // Registration is the one moment a driver writes their own doc — and
+      // the only place a forged wallet/verification could slip in. Create is
+      // pinned to the exact field set and forced into a zeroed, safe state:
+      // pending approval, empty wallet, offline. Every later financial/trust
+      // field is Cloud-Function-only (see the update rule below).
+      allow create: if isOwner(uid) &&
+        request.resource.data.verificationStatus == 'pending' &&
+        request.resource.data.isOnline == false &&
+        request.resource.data.walletBalance == 0 &&
+        request.resource.data.rating == 5 &&
+        request.resource.data.ratingCount == 0 &&
+        request.resource.data.totalRides == 0 &&
+        request.resource.data.currentLocation == null &&
+        request.resource.data.lastLocationAt == null &&
+        request.resource.data.keys().hasOnly([
+          'name', 'phone', 'vehicleModel', 'plateNumber', 'verificationStatus',
+          'idPhotoUrl', 'licensePhotoUrl', 'vehiclePhotoUrl', 'selfiePhotoUrl',
+          'rating', 'ratingCount', 'totalRides', 'isOnline', 'walletBalance',
+          'currentLocation', 'lastLocationAt', 'createdAt', 'pushToken'
+        ]);
       // Drivers can only touch their own operational fields directly (location
       // pings, push token, editing their own profile text). Notably NOT
       // `isOnline` — going online is gated on wallet balance server-side by
@@ -42,10 +74,13 @@ service cloud.firestore {
       // here or a driver could bypass the balance check with a raw update.
       // walletBalance, verificationStatus, rating, ratingCount, and totalRides
       // are financial/trust fields, likewise Cloud-Function-only.
+      // The four *PhotoUrl fields are the driver's own uploaded verification
+      // photos, so they may update them (e.g. re-submitting after a rejection).
       allow update: if isAdmin() ||
         (isOwner(uid) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(
-           ['currentLocation', 'lastLocationAt', 'pushToken', 'name', 'phone', 'vehicleModel', 'plateNumber']
+           ['currentLocation', 'lastLocationAt', 'pushToken', 'name', 'phone', 'vehicleModel', 'plateNumber',
+            'idPhotoUrl', 'licensePhotoUrl', 'vehiclePhotoUrl', 'selfiePhotoUrl']
          ));
       allow delete: if false;
     }
@@ -58,21 +93,69 @@ service cloud.firestore {
          resource.data.status in ['searching', 'offers_received'] ||
          isAdmin());
 
-      allow create: if isSignedIn() && request.resource.data.riderId == request.auth.uid;
+      // Rides are normally created by the requestRide Cloud Function (which
+      // does matching + push in one call). The direct-create path is only a
+      // fallback for older app builds, so it's pinned to the exact field set
+      // and forced into a safe initial state — a rider must not be able to
+      // create a ride that claims a driver is assigned, is in progress, or
+      // already completed (that would fake trip history and revenue).
+      allow create: if isSignedIn() &&
+        request.resource.data.riderId == request.auth.uid &&
+        request.resource.data.status == 'searching' &&
+        request.resource.data.assignedDriverId == null &&
+        request.resource.data.assignedFare == null &&
+        request.resource.data.requestedFare is number &&
+        request.resource.data.requestedFare > 0 &&
+        request.resource.data.keys().hasOnly([
+          'riderId', 'riderName', 'pickup', 'destination', 'rideTypeId', 'requestedFare',
+          'currency', 'paymentMethod', 'paymentStatus', 'status', 'assignedDriverId',
+          'assignedFare', 'geohashPrefix5', 'createdAt', 'updatedAt', 'createdBy'
+        ]);
 
-      // Riders can update their own request (cancel, raise fare);
-      // Cloud Functions (admin SDK, bypasses rules) handle driver-assignment writes.
-      allow update: if isSignedIn() && resource.data.riderId == request.auth.uid;
+      // Riders can raise their own offered fare while searching (the app's
+      // only direct write). Status/driver changes go through Cloud Functions.
+      allow update: if isSignedIn() && resource.data.riderId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestedFare']);
       allow delete: if false;
 
       match /offers/{driverId} {
-        // Any online, approved driver can propose an offer.
-        allow create: if isSignedIn() && request.auth.uid == driverId;
-        // Rider (to accept/decline) or the offering driver (to withdraw) can update.
+        // Fallback for direct writes — the real flow goes through the
+        // submitOffer Cloud Function, which checks verification + ride state
+        // transactionally. A client may only create an offer under its OWN
+        // uid, and only if that account is an approved driver. The doc is
+        // pinned to the same field set submitOffer writes, forced into a
+        // 'pending', positive-fare state, and every profile value is mirrored
+        // from the driver's own doc — so a rogue client can't plant an offer
+        // that claims a forged rating, an invented vehicle, or an
+        // already-accepted status.
+        function offerMatchesDriverProfile() {
+          let d = get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data;
+          return d.verificationStatus == 'approved' &&
+            request.resource.data.driverId == request.auth.uid &&
+            request.resource.data.driverName == d.name &&
+            request.resource.data.vehicleModel == d.vehicleModel &&
+            request.resource.data.rating == d.rating &&
+            request.resource.data.totalRides == d.totalRides;
+        }
+        allow create: if isSignedIn() &&
+          request.auth.uid == driverId &&
+          offerMatchesDriverProfile() &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.offeredFare is number &&
+          request.resource.data.offeredFare > 0 &&
+          request.resource.data.keys().hasOnly([
+            'driverId', 'driverName', 'vehicleModel', 'rating', 'totalRides',
+            'offeredFare', 'etaMinutes', 'status', 'createdAt'
+          ]);
+        // Rider (to accept/decline) or the offering driver (to withdraw) can
+        // update the offer's status only. Assignment itself is Cloud-Function-
+        // only on the ride doc, so a forged status here is cosmetic and can't
+        // start a trip or fake history.
         allow read: if isSignedIn();
         allow update: if isSignedIn() &&
           (request.auth.uid == driverId ||
-           get(/databases/$(database)/documents/rideRequests/$(rideId)).data.riderId == request.auth.uid);
+           get(/databases/$(database)/documents/rideRequests/$(rideId)).data.riderId == request.auth.uid) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
         allow delete: if false;
       }
 
@@ -94,7 +177,16 @@ service cloud.firestore {
           return ride.riderId == request.auth.uid || ride.assignedDriverId == request.auth.uid;
         }
         allow read: if isSignedIn() && (isRideParty() || isAdmin());
-        allow create: if isSignedIn() && isRideParty() && request.resource.data.senderId == request.auth.uid;
+        // The sender must be the caller, the field set is fixed, and the role
+        // must match who the caller actually is on this ride — a driver can't
+        // post a message masquerading as the rider (or vice versa).
+        allow create: if isSignedIn() && isRideParty() &&
+          request.resource.data.senderId == request.auth.uid &&
+          ((request.auth.uid == get(/databases/$(database)/documents/rideRequests/$(rideId)).data.riderId &&
+            request.resource.data.senderRole == 'rider') ||
+           (request.auth.uid == get(/databases/$(database)/documents/rideRequests/$(rideId)).data.assignedDriverId &&
+            request.resource.data.senderRole == 'driver')) &&
+          request.resource.data.keys().hasOnly(['senderId', 'senderRole', 'text', 'createdAt']);
         allow update: if false;
         allow delete: if false;
       }
@@ -125,6 +217,18 @@ service cloud.firestore {
       allow read: if isOwner(uid) || isAdmin();
       // Only requestTopUp/reviewTopUp/completeTrip (all Admin SDK) write
       // these — never the driver directly, so their balance can't be forged.
+      allow write: if false;
+    }
+
+    // ---- Admin analytics counters: written by Cloud Functions (Admin SDK),
+    // readable by admins only. Never client-writable — a forged counter
+    // would fake the business's revenue numbers. ----
+    match /adminStats/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /adminStatsDaily/{dayId} {
+      allow read: if isAdmin();
       allow write: if false;
     }
   }

@@ -8,6 +8,7 @@ import { submitRating } from './ratings';
 import { requestRide } from './rideMatching';
 import { sendChatMessage } from './chat';
 import { setOnlineStatus, requestTopUp, reviewTopUp, initiateBcelTopUp, bcelWebhook } from './wallet';
+import { recomputeAdminStats } from './analytics';
 
 // Standalone server that serves the same business logic as the Firebase
 // Cloud Functions, for running on a plain host (e.g. the gofair VPS) instead
@@ -54,6 +55,7 @@ const callables: Record<string, unknown> = {
   requestTopUp,
   reviewTopUp,
   initiateBcelTopUp,
+  recomputeAdminStats,
 };
 
 // The firebase-functions v2 TS types describe a `CallableFunction` object,
@@ -64,7 +66,24 @@ for (const [name, handler] of Object.entries(callables)) {
   app.use(`/${name}`, handler as express.RequestHandler);
 }
 
-app.post('/bcelWebhook', bcelWebhook as unknown as express.RequestHandler);
+// The BCEL webhook signs the RAW body, so it must be captured before the
+// global express.json() parser runs (which would re-serialize and break the
+// HMAC). Mounting this route first means the webhook handles the request
+// before express.json() is reached; req.rawBody is then verified inside
+// bcelWebhook.
+app.post(
+  '/bcelWebhook',
+  (req, res, next) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      (req as any).rawBody = Buffer.concat(chunks);
+      next();
+    });
+    req.on('error', (err) => next(err));
+  },
+  bcelWebhook as unknown as express.RequestHandler
+);
 
 app.get('/healthz', (_req, res) => {
   res.json({ ok: true });

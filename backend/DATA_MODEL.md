@@ -26,6 +26,13 @@ Driver account + live status. Kept separate from `users` so driver fields
   vehicleModel: string,
   plateNumber: string,
   verificationStatus: 'pending' | 'approved' | 'rejected',
+  // The four verification photos uploaded at sign-up for the admin's
+  // reference check (storage path: driverVerification/{uid}/…). Owner-
+  // writable; the admin reviews them in the dashboard before approving.
+  idPhotoUrl?: string,
+  licensePhotoUrl?: string,
+  vehiclePhotoUrl?: string,
+  selfiePhotoUrl?: string,
   rating: number,
   ratingCount: number,
   totalRides: number,

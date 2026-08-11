@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from './firebaseAdmin';
 import { sendPushToTokens } from './rideMatching';
+import { txRecordCompletedRide } from './analytics';
 
 /** Driver registers their FCM push token so they can be notified of new nearby requests. */
 export const registerPushToken = onCall(async (request) => {
@@ -185,6 +186,9 @@ export const startTrip = onCall(async (request) => {
   if (ride.assignedDriverId !== uid) {
     throw new HttpsError('permission-denied', 'Only the assigned driver can start this trip.');
   }
+  if (ride.status !== 'driver_assigned') {
+    throw new HttpsError('failed-precondition', 'Trip must be assigned before it can start.');
+  }
 
   await rideRef.update({ status: 'in_progress', updatedAt: FieldValue.serverTimestamp() });
 
@@ -228,6 +232,13 @@ export const completeTrip = onCall(async (request) => {
     if (ride.assignedDriverId !== uid) {
       throw new HttpsError('permission-denied', 'Only the assigned driver can complete this trip.');
     }
+    // Hard state guard inside the transaction: a driver (or a modified
+    // client replaying the call) can't complete a trip that isn't in
+    // progress, so the commission can't be deducted twice and totalRides
+    // can't be inflated by hammering this endpoint.
+    if (ride.status !== 'in_progress') {
+      throw new HttpsError('failed-precondition', 'Trip must be in progress to complete.');
+    }
 
     const commissionRate = configDoc.data()?.commissionRate ?? DEFAULT_COMMISSION_RATE;
     const fare = ride.assignedFare ?? 0;
@@ -250,6 +261,10 @@ export const completeTrip = onCall(async (request) => {
       reviewedAt: null,
       reviewedBy: null,
     });
+
+    // Count the trip into the admin analytics counters in the same
+    // transaction so stats stay consistent with the wallet ledger.
+    txRecordCompletedRide(tx, fare, commissionDeducted, ride.rideTypeId);
   });
 
   const rideSnap = await rideRef.get();

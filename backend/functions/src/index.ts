@@ -9,6 +9,7 @@ Sentry.init({
 });
 
 export { onRideRequestCreated, requestRide } from './rideMatching';
+export { recomputeAdminStats } from './analytics';
 export {
   submitOffer,
   acceptOffer,

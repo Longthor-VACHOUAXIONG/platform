@@ -1,8 +1,12 @@
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { FieldValue, GeoPoint } from 'firebase-admin/firestore';
 import { db } from './firebaseAdmin';
+import { txRecordTopUpApproved } from './analytics';
 
 const DEFAULT_MINIMUM_BALANCE = 50000;
+const DEFAULT_MIN_TOPUP_AMOUNT = 50000;
+const DEFAULT_MAX_TOPUP_AMOUNT = 5_000_000;
 
 /**
  * Driver toggles online/offline. Going online is gated on wallet balance —
@@ -46,15 +50,38 @@ export const setOnlineStatus = onCall(async (request) => {
   return { ok: true };
 });
 
+/** Reads top-up amount bounds from walletConfig so they're tunable in the
+ * admin dashboard rather than buried in code. */
+async function topUpAmountBounds() {
+  const configDoc = await db.collection('walletConfig').doc('default').get();
+  const config = configDoc.data();
+  return {
+    min: config?.minTopUpAmount ?? DEFAULT_MIN_TOPUP_AMOUNT,
+    max: config?.maxTopUpAmount ?? DEFAULT_MAX_TOPUP_AMOUNT,
+  };
+}
+
+function assertTopUpAmount(amount: number, min: number, max: number) {
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+    throw new HttpsError('invalid-argument', 'A positive amount is required.');
+  }
+  if (amount < min || amount > max) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Top-up amount must be between ${min} and ${max}.`,
+      { min, max }
+    );
+  }
+}
+
 /** Driver submits a top-up request after manually transferring via bank QR. */
 export const requestTopUp = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
   const { amount, proofImageUrl } = request.data as { amount: number; proofImageUrl?: string };
-  if (!amount || amount <= 0) {
-    throw new HttpsError('invalid-argument', 'A positive amount is required.');
-  }
+  const { min, max } = await topUpAmountBounds();
+  assertTopUpAmount(amount, min, max);
 
   const ref = await db.collection('drivers').doc(uid).collection('walletTransactions').add({
     type: 'topup',
@@ -109,6 +136,8 @@ export const reviewTopUp = onCall(async (request) => {
         reviewedAt: FieldValue.serverTimestamp(),
         reviewedBy: callerUid,
       });
+      // Count the approval into admin analytics in the same transaction.
+      txRecordTopUpApproved(tx, txn.amount);
     } else {
       tx.update(txnRef, {
         status: 'rejected',
@@ -125,14 +154,23 @@ export const reviewTopUp = onCall(async (request) => {
  * Shared balance-crediting logic, used by both the manual approval flow
  * above and the BCEL auto-topup webhook below, so there's exactly one place
  * that mutates a wallet balance for a "money arrived" event.
+ *
+ * Pass `txnDocId` (the bank's reference) to make the credit idempotent: if a
+ * transaction with that id already exists the call is a no-op, so a replayed
+ * webhook can never double-credit a wallet.
  */
-async function creditDriverWallet(driverId: string, amount: number, note: string) {
+async function creditDriverWallet(driverId: string, amount: number, note: string, txnDocId?: string) {
   const driverRef = db.collection('drivers').doc(driverId);
-  const txnRef = driverRef.collection('walletTransactions').doc();
+  const txnRef = txnDocId
+    ? driverRef.collection('walletTransactions').doc(txnDocId)
+    : driverRef.collection('walletTransactions').doc();
 
   await db.runTransaction(async (tx) => {
     const driverDoc = await tx.get(driverRef);
     if (!driverDoc.exists) throw new HttpsError('not-found', 'Driver not found.');
+
+    const existing = await tx.get(txnRef);
+    if (existing.exists) return; // already credited (e.g. a webhook replay)
 
     const newBalance = (driverDoc.data()?.walletBalance ?? 0) + amount;
     tx.update(driverRef, { walletBalance: newBalance });
@@ -148,6 +186,7 @@ async function creditDriverWallet(driverId: string, amount: number, note: string
       reviewedAt: FieldValue.serverTimestamp(),
       reviewedBy: 'bcel-auto',
     });
+    txRecordTopUpApproved(tx, amount);
   });
 }
 
@@ -172,7 +211,8 @@ export const initiateBcelTopUp = onCall(async (request) => {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
   const { amount } = request.data as { amount: number };
-  if (!amount || amount <= 0) throw new HttpsError('invalid-argument', 'A positive amount is required.');
+  const { min, max } = await topUpAmountBounds();
+  assertTopUpAmount(amount, min, max);
 
   const [walletConfigDoc, credsDoc] = await Promise.all([
     db.collection('walletConfig').doc('default').get(),
@@ -203,39 +243,99 @@ export const initiateBcelTopUp = onCall(async (request) => {
 });
 
 /**
+ * Constant-time string comparison so signature checks can't be timed to
+ * leak prefix matches.
+ */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Returns the exact request body bytes so the HMAC is computed over what the
+ * bank actually sent (never a re-serialization, whose key order/whitespace
+ * would break the signature).
+ *
+ *  - Cloud Functions (functions-framework) exposes `req.rawBody`.
+ *  - The VPS backend (server.ts) captures the raw stream into `req.rawBody`
+ *    before express.json() gets to it.
+ *  - `Buffer` bodies (application/octet-stream) are used as-is.
+ */
+function rawBody(req: { rawBody?: unknown; body?: unknown }): Buffer {
+  if (req.rawBody) return Buffer.isBuffer(req.rawBody) ? req.rawBody : Buffer.from(String(req.rawBody));
+  if (Buffer.isBuffer(req.body)) return req.body;
+  return Buffer.from(JSON.stringify(req.body ?? {}), 'utf8');
+}
+
+/**
  * BCEL webhook receiver (HTTPS endpoint, not a callable — bank webhooks
  * POST directly, not as a signed-in Firebase user). Once BCEL confirms a
  * payment, this credits the driver's wallet via the same helper the manual
  * approval flow uses.
  *
- * ⚠️ Signature verification below is a placeholder — replace with BCEL's
- * actual webhook-signing scheme before relying on this. Without real
- * verification, anyone who finds this URL could credit arbitrary wallets.
+ * Fail-closed security posture:
+ *   1. Disabled unless `secureConfig/bcel.webhookEnabled == true` AND a
+ *      `webhookSecret` is set (both admin-configured in the dashboard).
+ *   2. Requires an HMAC-SHA256 signature over the raw body, verified in
+ *      constant time. Header name is configurable via
+ *      `secureConfig/bcel.webhookSignatureHeader` (default x-bcel-signature)
+ *      because bank conventions differ.
+ *   3. Replay-safe: credited once per `referenceId` — a re-delivered callback
+ *      is a no-op, never a second credit.
+ *   4. Amount is validated against the walletConfig min/max top-up bounds.
+ *
+ * ⚠️ HMAC is a deliberate, documented choice — BCEL's real signing scheme may
+ * differ (e.g. timestamp-nonce payloads or a different hash). When you get
+ * their API docs, align `webhookSignatureHeader` + the HMAC construction with
+ * their spec. Until `webhookEnabled` is switched on in the dashboard this
+ * endpoint refuses everything, so there's no money-moving surface exposed.
  */
 export const bcelWebhook = onRequest(async (req, res) => {
   try {
     const credsDoc = await db.collection('secureConfig').doc('bcel').get();
-    const webhookSecret = credsDoc.data()?.webhookSecret;
-
-    // TODO: verify the request is genuinely from BCEL using their signing
-    // scheme (e.g. an HMAC header checked against `webhookSecret`) — do NOT
-    // deploy this to production without real verification here.
-    if (!webhookSecret) {
-      res.status(503).send('BCEL webhook secret not configured');
+    const creds = credsDoc.data();
+    const webhookSecret = creds?.webhookSecret;
+    if (!creds || creds.webhookEnabled !== true || typeof webhookSecret !== 'string' || webhookSecret.length === 0) {
+      res.status(503).send('BCEL webhook not enabled');
       return;
     }
 
-    const { driverId, amount, referenceId } = req.body as {
-      driverId: string;
-      amount: number;
-      referenceId: string;
-    };
-    if (!driverId || !amount) {
-      res.status(400).send('Missing driverId or amount');
+    const signatureHeader = (creds.webhookSignatureHeader || 'x-bcel-signature').toLowerCase();
+    const received = req.headers[signatureHeader];
+    if (typeof received !== 'string' || received.length === 0) {
+      res.status(401).send('Missing signature header');
+      return;
+    }
+    const expected = createHmac('sha256', webhookSecret).update(rawBody(req)).digest('hex');
+    if (!safeEqual(expected, received)) {
+      res.status(401).send('Invalid signature');
       return;
     }
 
-    await creditDriverWallet(driverId, amount, `BCEL auto top-up (ref: ${referenceId ?? 'n/a'})`);
+    const body = (req.body ?? {}) as { driverId?: unknown; amount?: unknown; referenceId?: unknown };
+    const { driverId, amount, referenceId } = body;
+    if (typeof driverId !== 'string' || driverId.length === 0 || driverId.length > 64) {
+      res.status(400).send('Missing or invalid driverId');
+      return;
+    }
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+      res.status(400).send('Missing or invalid amount');
+      return;
+    }
+    if (typeof referenceId !== 'string' || referenceId.length === 0 || referenceId.length > 128) {
+      res.status(400).send('Missing referenceId — required for replay protection');
+      return;
+    }
+
+    const { min, max } = await topUpAmountBounds();
+    if (amount < min || amount > max) {
+      res.status(422).send(`Amount outside allowed range (${min}-${max})`);
+      return;
+    }
+
+    await creditDriverWallet(driverId, amount, `BCEL auto top-up (ref: ${referenceId})`, referenceId);
     res.status(200).send('OK');
   } catch (err) {
     console.error('bcelWebhook error', err);

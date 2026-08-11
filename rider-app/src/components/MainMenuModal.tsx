@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '../theme/theme';
@@ -15,13 +16,14 @@ export default function MainMenuModal({
   onOpenTripHistory: () => void;
 }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [languageOpen, setLanguageOpen] = useState(false);
 
   return (
     <>
       <Modal visible={visible && !languageOpen} transparent animationType="slide">
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <Pressable
             style={styles.row}
             onPress={() => {

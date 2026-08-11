@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, Switch, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, Switch, Image, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,7 @@ const CANCEL_REASON_KEYS = [
 
 export default function SearchingOffersScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { rideId, fare: initialFare, rideTypeName, pickup, destination } = route.params;
   const [fare, setFare] = useState(initialFare);
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
@@ -99,7 +101,7 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
         initialRegion={{ latitude: 17.99, longitude: 102.64, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
       />
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top', 'left', 'right']}>
         <View style={styles.driversRow}>
           <Text style={styles.driversText}>
             {t('searching.driversViewing', { count: driversViewing })}
@@ -112,7 +114,7 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
         </View>
       </SafeAreaView>
 
-      <View style={styles.sheet}>
+      <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <View style={styles.grabber} />
 
         <View style={styles.timerRow}>
@@ -163,12 +165,12 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
         <Pressable style={styles.cancelButton} onPress={() => setShowCancelReasons(true)}>
           <Text style={typography.bodyBold}>{t('searching.cancelRequest')}</Text>
         </Pressable>
-      </View>
+      </SafeAreaView>
 
       {/* Raise fare prompt — image 15/16 */}
       <Modal visible={showRaisePrompt} transparent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setShowRaisePrompt(false)} />
-        <View style={styles.modalSheet}>
+        <View style={[styles.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.modalHeaderRow}>
             <Text style={typography.h3}>{t('searching.stillNeedARide')}</Text>
             <Pressable onPress={() => setShowRaisePrompt(false)}>
@@ -193,7 +195,7 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
       {/* Cancel reasons — image 17 */}
       <Modal visible={showCancelReasons} transparent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setShowCancelReasons(false)} />
-        <View style={styles.modalSheet}>
+        <View style={[styles.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.modalHeaderRow}>
             <Text style={typography.h3}>{t('searching.whyCancel')}</Text>
             <Pressable onPress={() => setShowCancelReasons(false)}>

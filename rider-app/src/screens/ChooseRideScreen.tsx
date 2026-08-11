@@ -4,14 +4,15 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  SafeAreaView,
   Modal,
   Switch,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView, { Marker, Polyline } from '../components/OsmMapView';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,8 @@ const RIDE_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> =
 
 export default function ChooseRideScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const rideTypeLabel = (id: string) => t(`chooseRide.${id}Name`);
   const rideTypeDesc = (id: string) => t(`chooseRide.${id}Desc`);
 
@@ -127,7 +130,7 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
         </View>
       )}
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top', 'left', 'right']}>
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color={colors.black} />
         </Pressable>
@@ -144,9 +147,10 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
         </View>
       </SafeAreaView>
 
-      <View style={styles.sheet}>
+      <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <View style={styles.grabber} />
 
+        <ScrollView style={{ maxHeight: windowHeight * 0.54 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.sm }}>
         <View style={styles.rideCard}>
           <View style={styles.rideRow}>
             <MaterialCommunityIcons name={RIDE_ICONS[selected.icon]} size={36} color={colors.black} />
@@ -184,11 +188,10 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
           )}
         </View>
 
-        <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-          {rideTypes
-            .filter((rt) => rt.id !== selected.id)
-            .map((rt) => (
-              <Pressable key={rt.id} style={styles.optionRow} onPress={() => selectRide(rt)}>
+        {rideTypes
+          .filter((rt) => rt.id !== selected.id)
+          .map((rt) => (
+            <Pressable key={rt.id} style={styles.optionRow} onPress={() => selectRide(rt)}>
                 <MaterialCommunityIcons name={RIDE_ICONS[rt.icon]} size={30} color={colors.black} />
                 <View style={{ flex: 1 }}>
                   <Text style={typography.bodyBold}>{rideTypeLabel(rt.id)}</Text>
@@ -241,7 +244,7 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
                   destination,
                 });
               } catch (err: any) {
-                Alert.alert(t('chooseRide.couldNotRequestRide'), err.message ?? t('onboarding.pleaseTryAgain'));
+                Alert.alert(t('chooseRide.couldNotRequestRide'), err.message ?? t('common.pleaseTryAgain'));
               } finally {
                 setCreating(false);
               }
@@ -257,11 +260,11 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
             <Ionicons name="options-outline" size={18} color={colors.black} />
           </Pressable>
         </View>
-      </View>
+      </SafeAreaView>
 
       <Modal visible={optionsOpen} animationType="slide" transparent>
         <Pressable style={styles.modalBackdrop} onPress={() => setOptionsOpen(false)} />
-        <View style={styles.modalSheet}>
+        <View style={[styles.modalSheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.modalHeader}>
             <Text style={typography.h3}>{t('chooseRide.options')}</Text>
             <Pressable onPress={() => setOptionsOpen(false)}>

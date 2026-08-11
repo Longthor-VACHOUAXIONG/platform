@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '../theme/theme';
@@ -13,11 +14,12 @@ export default function LanguageSwitcherModal({
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
         <View style={styles.header}>
           <Text style={typography.h3}>{t('settings.language')}</Text>
           <Pressable onPress={onClose}>

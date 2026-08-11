@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OsmMapView, { Marker } from '../components/OsmMapView';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -72,7 +73,7 @@ export default function HomeScreen({ navigation }: Props) {
         <Marker coordinate={region} />
       </OsmMapView>
 
-      <SafeAreaView style={styles.topBar} pointerEvents="box-none">
+      <SafeAreaView style={styles.topBar} edges={['top', 'left', 'right']} pointerEvents="box-none">
         <Pressable style={styles.menuButton} onPress={() => setMenuOpen(true)}>
           <Ionicons name="menu" size={22} color={colors.black} />
         </Pressable>
@@ -94,7 +95,7 @@ export default function HomeScreen({ navigation }: Props) {
         <Ionicons name="navigate" size={20} color={colors.black} />
       </Pressable>
 
-      <SafeAreaView style={styles.sheet}>
+      <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <Pressable
           style={styles.searchBar}
           onPress={() => navigation.navigate('SetDestination', { pickup: pickupParam })}

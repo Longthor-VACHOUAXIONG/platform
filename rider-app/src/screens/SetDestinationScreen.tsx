@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OsmMapView, { type Region } from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -61,13 +62,13 @@ export default function SetDestinationScreen({ navigation, route }: Props) {
         <View style={styles.pinStem} />
       </View>
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top']}>
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color={colors.black} />
         </Pressable>
       </SafeAreaView>
 
-      <SafeAreaView style={styles.bottomBar}>
+      <SafeAreaView style={styles.bottomBar} edges={['bottom', 'left', 'right']}>
         <Pressable
           style={[styles.doneButton, resolving && styles.doneButtonDisabled]}
           disabled={resolving}

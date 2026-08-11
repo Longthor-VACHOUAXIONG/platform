@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
@@ -53,7 +54,7 @@ export default function TripHistoryScreen({ navigation }: Props) {
         <FlatList
           data={trips}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+          contentContainerStyle={{ padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl }}
           ListEmptyComponent={
             <Text style={[typography.body, { color: colors.gray600, textAlign: 'center', marginTop: spacing.xl }]}>
               {t('tripHistory.empty')}

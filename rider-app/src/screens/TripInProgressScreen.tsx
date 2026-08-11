@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -35,13 +36,13 @@ export default function TripInProgressScreen({ navigation, route }: Props) {
         initialRegion={{ latitude: 17.99, longitude: 102.64, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
       />
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top']}>
         <Pressable style={styles.chatButton} onPress={() => navigation.navigate('Chat', { rideId, otherPartyName: driverName })}>
           <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.black} />
         </Pressable>
       </SafeAreaView>
 
-      <SafeAreaView style={styles.sheet}>
+      <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <Text style={typography.h2}>
           {status === 'in_progress'
             ? t('tripInProgress.tripUnderway', { driverName })

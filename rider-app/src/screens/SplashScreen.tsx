@@ -20,7 +20,7 @@ export default function SplashScreen({ navigation }: Props) {
     const timer = setTimeout(() => {
       // Firebase Auth persists sessions — skip the sign-in flow for a
       // returning rider instead of forcing re-auth on every launch.
-      navigation.replace(auth.currentUser ? 'Home' : 'Onboarding');
+      navigation.replace(auth.currentUser ? 'Home' : 'Auth');
     }, 1800);
 
     return () => clearTimeout(timer);

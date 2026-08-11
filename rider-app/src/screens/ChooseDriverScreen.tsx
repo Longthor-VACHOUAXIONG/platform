@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, FlatList, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ChooseDriver'>;
 
 export default function ChooseDriverScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { rideId } = route.params;
   const [offers, setOffers] = useState<RideOffer[]>([]);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -51,7 +53,7 @@ export default function ChooseDriverScreen({ navigation, route }: Props) {
         initialRegion={{ latitude: 17.99, longitude: 102.64, latitudeDelta: 0.04, longitudeDelta: 0.04 }}
       />
 
-      <SafeAreaView style={styles.topBar}>
+      <SafeAreaView style={styles.topBar} edges={['top', 'left', 'right']}>
         <Pressable style={styles.cancelPill} onPress={() => setShowCancelConfirm(true)}>
           <Ionicons name="close" size={16} color={colors.black} />
           <Text style={typography.bodyBold}>{t('searching.cancelRequest')}</Text>
@@ -66,7 +68,7 @@ export default function ChooseDriverScreen({ navigation, route }: Props) {
 
       <FlatList
         style={styles.list}
-        contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: 160, gap: spacing.sm }}
+        contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: 160, gap: spacing.sm, paddingBottom: insets.bottom + spacing.xl }}
         data={offers}
         keyExtractor={(d) => d.driverId}
         ListEmptyComponent={

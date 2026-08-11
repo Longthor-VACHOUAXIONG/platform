@@ -185,6 +185,9 @@ export default function HomeScreen({ navigation }: Props) {
             <Ionicons name="receipt-outline" size={18} color={colors.black} />
             <Text style={typography.bodyBold}>{t('home.earnings')}</Text>
           </Pressable>
+          <Pressable style={styles.earningsButton} onPress={() => navigation.navigate('Settings')}>
+            <Ionicons name="settings-outline" size={18} color={colors.black} />
+          </Pressable>
           <Pressable style={styles.earningsButton} onPress={() => setLanguageOpen(true)}>
             <Ionicons name="language-outline" size={18} color={colors.black} />
           </Pressable>

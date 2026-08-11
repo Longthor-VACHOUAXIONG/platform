@@ -12,6 +12,7 @@ import TripHistoryScreen from '../screens/TripHistoryScreen';
 import ChatScreen from '../screens/ChatScreen';
 import WalletScreen from '../screens/WalletScreen';
 import TopUpScreen from '../screens/TopUpScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   Chat: { rideId: string; otherPartyName: string };
   Wallet: undefined;
   TopUp: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,6 +44,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Chat" component={ChatScreen} />
         <Stack.Screen name="Wallet" component={WalletScreen} />
         <Stack.Screen name="TopUp" component={TopUpScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

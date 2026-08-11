@@ -100,7 +100,16 @@
     "empty": "No completed trips yet."
   },
   "settings": {
-    "language": "Language"
+    "title": "Settings",
+    "language": "Language",
+    "driver": "Driver",
+    "wallet": "Wallet",
+    "helpSupport": "Help & support",
+    "termsPolicy": "Terms & privacy policy",
+    "about": "About",
+    "logout": "Log out",
+    "logoutTitle": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?"
   },
   "chat": {
     "messagePlaceholder": "Type a message…"

@@ -100,7 +100,16 @@
     "empty": "暂无已完成的行程。"
   },
   "settings": {
-    "language": "语言"
+    "title": "设置",
+    "language": "语言",
+    "driver": "司机",
+    "wallet": "钱包",
+    "helpSupport": "帮助与支持",
+    "termsPolicy": "条款与隐私政策",
+    "about": "关于",
+    "logout": "退出登录",
+    "logoutTitle": "退出登录",
+    "logoutConfirm": "确定要退出登录吗？"
   },
   "chat": {
     "messagePlaceholder": "输入消息…"

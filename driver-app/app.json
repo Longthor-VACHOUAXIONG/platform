@@ -27,7 +27,8 @@
         }
       ],
       "expo-font",
-      "./plugins/withFirebaseNotificationIcon.js"
+      "./plugins/withFirebaseNotificationIcon.js",
+      "./plugins/withMapLibreSupportLibFix.js"
     ],
     "ios": {
       "supportsTablet": true,

@@ -39,6 +39,10 @@ export async function createRideRequest(params: {
   destination: { label: string; lat: number; lng: number };
   rideTypeId: string;
   requestedFare: number;
+  extraPassengers?: boolean;
+  childSeat?: boolean;
+  comment?: string;
+  zoneId?: string;
 }) {
   // The doc is created server-side by the `requestRide` callable (the VPS
   // backend can't run Firestore triggers, so creation + nearby-driver
@@ -53,6 +57,10 @@ export async function createRideRequest(params: {
     destination: params.destination,
     rideTypeId: params.rideTypeId,
     requestedFare: params.requestedFare,
+    extraPassengers: params.extraPassengers,
+    childSeat: params.childSeat,
+    comment: params.comment,
+    zoneId: params.zoneId,
   });
   return res.data.rideId;
 }
@@ -80,6 +88,15 @@ export function listenToOffers(rideId: string, cb: (offers: RideOffer[]) => void
 export const acceptOffer = (data: { rideId: string; driverId: string }) =>
   httpsCallable<{ rideId: string; driverId: string }, { ok: boolean }>(functions, 'acceptOffer')(data);
 
+export const declineOffer = (data: { rideId: string; driverId: string }) =>
+  httpsCallable<{ rideId: string; driverId: string }, { ok: boolean }>(functions, 'declineOffer')(data);
+
+export const updateRequestedFare = (data: { rideId: string; requestedFare: number }) =>
+  httpsCallable<{ rideId: string; requestedFare: number }, { ok: boolean }>(
+    functions,
+    'updateRequestedFare'
+  )(data);
+
 export const cancelRide = (data: { rideId: string; reason?: string }) =>
   httpsCallable<{ rideId: string; reason?: string }, { ok: boolean }>(functions, 'cancelRide')(data);
 
@@ -89,7 +106,7 @@ export const getRecommendedFare = (data: {
   rideTypeId: string;
   zoneId: string;
 }) =>
-  httpsCallable<typeof data, { fare: number; currency: string; distanceKm: number }>(
+  httpsCallable<typeof data, { fare: number; currency: string; distanceKm: number; minimumFare: number }>(
     functions,
     'getRecommendedFare'
   )(data);

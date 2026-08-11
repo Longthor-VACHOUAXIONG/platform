@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SetDestination'>;
 
 export default function SetDestinationScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { pickup } = route.params;
+  const { pickup, initialRideTypeId } = route.params;
 
   // Start the map centered a short distance from pickup so the pin isn't
   // sitting exactly on top of the rider's own location.
@@ -76,6 +76,7 @@ export default function SetDestinationScreen({ navigation, route }: Props) {
             navigation.navigate('ChooseRide', {
               pickup,
               destination: { label, lat: region.latitude, lng: region.longitude },
+              initialRideTypeId,
             })
           }
         >
@@ -133,6 +134,6 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     alignItems: 'center',
   },
-  doneText: { ...typography.h3 },
+  doneText: { ...typography.h3, color: colors.white },
   doneButtonDisabled: { opacity: 0.5 },
 });

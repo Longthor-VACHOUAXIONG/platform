@@ -10,7 +10,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView, { Marker, Polyline } from '../components/OsmMapView';
@@ -19,17 +18,20 @@ import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { rideTypes } from '../data/mock';
 import { formatFare } from '../utils/format';
-import { estimateFareForDistance, haversineKm } from '../utils/fare';
+import { haversineKm } from '../utils/fare';
 import { getDrivingRoute, type LatLng } from '../utils/directions';
-import { createRideRequest } from '../api/rideApi';
-import { auth } from '../api/firebaseConfig';
+import { createRideRequest, getRecommendedFare } from '../api/rideApi';
+import { doc, getDoc } from '@react-native-firebase/firestore';
+import { auth, db } from '../api/firebaseConfig';
+import FareSlider from '../components/FareSlider';
 import type { RideType } from '../types';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChooseRide'>;
 
-const STEP = 1000;
+const STEP = 500;
+const ZONE_ID = 'Vientiane';
 
 const RIDE_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   car: 'car',
@@ -39,14 +41,14 @@ const RIDE_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> =
   'car-comfort': 'car-sports',
 };
 
+type ServerFare = { fare: number; currency: string; minimumFare: number };
+
 export default function ChooseRideScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const rideTypeLabel = (id: string) => t(`chooseRide.${id}Name`);
-  const rideTypeDesc = (id: string) => t(`chooseRide.${id}Desc`);
 
-  const { pickup, destination } = route.params;
+  const { pickup, destination, initialRideTypeId } = route.params;
 
   // Straight-line distance shown instantly while the real road route loads
   // in the background — same pattern inDrive/Uber use so the screen never
@@ -74,36 +76,96 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
     };
   }, [pickup, destination]);
 
-  // Use the real road distance once it's back; fall back to straight-line
-  // (times a small padding factor, since roads are never perfectly direct)
-  // if the Directions API call fails for any reason.
   const distanceKm = routeDistanceKm ?? straightLineKm * 1.3;
   const etaLabel = routeDurationMin
     ? `${routeDurationMin} ${t('common.min')}.`
     : `${Math.max(1, Math.round((distanceKm / 30) * 60))} ${t('common.min')}.`;
 
-  const [selected, setSelected] = useState<RideType>(rideTypes[0]);
-  const [fare, setFare] = useState(() => estimateFareForDistance(distanceKm, rideTypes[0].id));
+  const [selected, setSelected] = useState<RideType>(
+    () => rideTypes.find((rt) => rt.id === initialRideTypeId) ?? rideTypes[0]
+  );
+  // Recommended fares come from the backend callable, which reads the admin's
+  // pricingConfig (km × per-km rate). Offline fallback keeps the UI alive.
+  const [serverFares, setServerFares] = useState<Record<string, ServerFare>>({});
+  const [fare, setFare] = useState(0);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [extraPassengers, setExtraPassengers] = useState(false);
   const [childSeat, setChildSeat] = useState(false);
   const [comment, setComment] = useState('');
+  const [autoAccept, setAutoAccept] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [riderName, setRiderName] = useState('Rider');
 
-  // Recompute the fare once the real route distance comes back.
   useEffect(() => {
-    if (selected.id !== 'courier') {
-      setFare(estimateFareForDistance(distanceKm, selected.id));
-    }
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    getDoc(doc(db, 'users', uid))
+      .then((snap) => {
+        if (snap.exists() && snap.data()?.name) setRiderName(snap.data()!.name);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Ask the backend for the recommended fare of every ride type once we have
+  // a real road distance. Server fares win; client fallback only if offline.
+  useEffect(() => {
+    let cancelled = false;
+    if (!distanceKm) return;
+    (async () => {
+      const entries = await Promise.all(
+        rideTypes.map(async (rt) => {
+          try {
+            const res = await getRecommendedFare({
+              pickup: { lat: pickup.lat, lng: pickup.lng },
+              destination: { lat: destination.lat, lng: destination.lng },
+              rideTypeId: rt.id,
+              zoneId: ZONE_ID,
+            });
+            return [rt.id, res.data] as const;
+          } catch {
+            return [rt.id, null] as const;
+          }
+        })
+      );
+      if (cancelled) return;
+      const next: Record<string, ServerFare> = {};
+      entries.forEach(([id, data]) => {
+        next[id] = data ?? { fare: 0, currency: 'LAK', minimumFare: 10000 };
+      });
+      setServerFares(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [routeDistanceKm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The selected ride's fare = server recommended fare once it arrives,
+  // otherwise the local fallback estimate. Switching ride type resets to the
+  // recommendation for that type.
+  const minFareFor = (rt: RideType) => serverFares[rt.id]?.minimumFare ?? 10000;
+  const fareFor = (rt: RideType) =>
+    serverFares[rt.id]?.fare || estimateFallback(distanceKm, rt.id);
+
+  useEffect(() => {
+    setFare(fareFor(selected));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeDistanceKm]);
+  }, [selected.id, serverFares, routeDistanceKm]);
+
+  function estimateFallback(distanceKm: number, rideTypeId: string): number {
+    const rate: Record<string, number> = { ride: 3000, electro: 3800, moto: 1800, comfort: 3500, courier: 4000 };
+    return Math.max(10000, Math.round((distanceKm * (rate[rideTypeId] ?? 3000)) / 500) * 500);
+  }
 
   const selectRide = (rt: RideType) => {
     setSelected(rt);
-    if (rt.id !== 'courier') setFare(estimateFareForDistance(distanceKm, rt.id));
+    setFare(fareFor(rt));
   };
 
-  const canAdjustFare = selected.id !== 'courier';
+  const minFare = minFareFor(selected);
+  const recommended = fareFor(selected);
+  // Mirror the backend's acceptance band so the slider can't offer a price
+  // that requestRide/updateRequestedFare would reject.
+  const maxAllowed = Math.max(minFare * 2, Math.round((recommended * 2.5) / 500) * 500);
 
   return (
     <View style={styles.container}>
@@ -150,116 +212,118 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
       <SafeAreaView style={styles.sheet} edges={['bottom', 'left', 'right']}>
         <View style={styles.grabber} />
 
-        <ScrollView style={{ maxHeight: windowHeight * 0.54 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.sm }}>
-        <View style={styles.rideCard}>
-          <View style={styles.rideRow}>
-            <MaterialCommunityIcons name={RIDE_ICONS[selected.icon]} size={36} color={colors.black} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={typography.h3}>{rideTypeLabel(selected.id)}</Text>
-                <Ionicons name="information-circle-outline" size={16} color={colors.gray600} />
-              </View>
-              <Text style={styles.rideMeta}>
-                {selected.capacity ? `${selected.capacity} · ${selected.etaMinutes} ${t('common.min')}` : ''}
-              </Text>
-              <Text style={styles.rideDesc}>{rideTypeDesc(selected.id)}</Text>
-            </View>
-            <Pressable onPress={() => setOptionsOpen(true)}>
-              <Ionicons name="pencil" size={18} color={colors.black} />
-            </Pressable>
-          </View>
-
-          {canAdjustFare && (
-            <View style={styles.fareStepper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabsRow}
+          contentContainerStyle={{ gap: spacing.sm }}
+        >
+          {rideTypes.map((rt) => {
+            const active = rt.id === selected.id;
+            return (
               <Pressable
-                style={styles.stepperBtn}
-                onPress={() => setFare((f) => Math.max(STEP, f - STEP))}
+                key={rt.id}
+                style={[styles.tab, active && styles.tabActive]}
+                onPress={() => selectRide(rt)}
               >
-                <Text style={styles.stepperBtnText}>−</Text>
+                <MaterialCommunityIcons name={RIDE_ICONS[rt.icon]} size={20} color={active ? colors.white : colors.black} />
+                <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{rideTypeLabel(rt.id)}</Text>
               </Pressable>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={styles.fareAmount}>{formatFare(fare)}</Text>
-                <Text style={styles.fareCaption}>{t('chooseRide.recommendedFare')}</Text>
-              </View>
-              <Pressable style={styles.stepperBtn} onPress={() => setFare((f) => f + STEP)}>
-                <Text style={styles.stepperBtnText}>+</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-
-        {rideTypes
-          .filter((rt) => rt.id !== selected.id)
-          .map((rt) => (
-            <Pressable key={rt.id} style={styles.optionRow} onPress={() => selectRide(rt)}>
-                <MaterialCommunityIcons name={RIDE_ICONS[rt.icon]} size={30} color={colors.black} />
-                <View style={{ flex: 1 }}>
-                  <Text style={typography.bodyBold}>{rideTypeLabel(rt.id)}</Text>
-                  <Text style={styles.optionMeta}>
-                    {rt.capacity ? `${rt.capacity} · ${rt.etaMinutes} ${t('common.min')}` : rideTypeDesc(rt.id)}
-                  </Text>
-                  <Text style={styles.optionDesc}>{rideTypeDesc(rt.id)}</Text>
-                </View>
-                {rt.id !== 'courier' ? (
-                  <Text style={typography.bodyBold}>~{formatFare(estimateFareForDistance(distanceKm, rt.id))}</Text>
-                ) : null}
-              </Pressable>
-            ))}
+            );
+          })}
         </ScrollView>
 
-        <View style={styles.autoAcceptRow}>
-          <Ionicons name="send" size={16} color={colors.black} />
-          <Text style={styles.autoAcceptText}>{t('chooseRide.autoAcceptOffer', { fare: formatFare(fare) })}</Text>
-          <Switch value={false} />
+        <View style={styles.pricingCard}>
+          <View style={styles.fareHeaderRow}>
+            <View>
+              <Text style={styles.fareCaption}>{t('chooseRide.setYourFare')}</Text>
+              <Text style={styles.fareAmount}>{fare ? formatFare(fare) : '…'}</Text>
+            </View>
+            <View style={styles.fareSubRow}>
+              <Text style={styles.fareHint}>{t('chooseRide.recommendedFare')}</Text>
+              <Text style={styles.fareHintValue}>{formatFare(Math.round(recommended))}</Text>
+            </View>
+          </View>
+
+          <FareSlider
+            value={fare || minFare}
+            minimumValue={minFare}
+            maximumValue={maxAllowed}
+            step={STEP}
+            onValueChange={setFare}
+          />
+
+          <View style={styles.sliderLabels}>
+            <Text style={styles.sliderLabel}>{formatFare(minFare)}</Text>
+            <Text style={styles.sliderLabel}>{t('chooseRide.yourPrice')}</Text>
+            <Text style={styles.sliderLabel}>{formatFare(maxAllowed)}</Text>
+          </View>
         </View>
 
-        <View style={styles.ctaRow}>
-          <View style={styles.cashPill}>
-            <Ionicons name="cash-outline" size={18} color={colors.black} />
-          </View>
-          <Pressable
-            style={styles.findButton}
-            disabled={creating}
-            onPress={async () => {
-              const uid = auth.currentUser?.uid;
-              if (!uid) {
-                Alert.alert(t('chooseRide.pleaseSignInFirst'));
-                return;
-              }
-              setCreating(true);
-              try {
-                const rideId = await createRideRequest({
-                  riderId: uid,
-                  riderName: 'Rider',
-                  pickup,
-                  destination,
-                  rideTypeId: selected.id,
-                  requestedFare: fare,
-                });
-                navigation.navigate('SearchingOffers', {
-                  rideId,
-                  fare,
-                  rideTypeName: rideTypeLabel(selected.id),
-                  pickup,
-                  destination,
-                });
-              } catch (err: any) {
-                Alert.alert(t('chooseRide.couldNotRequestRide'), err.message ?? t('common.pleaseTryAgain'));
-              } finally {
-                setCreating(false);
-              }
-            }}
-          >
-            {creating ? (
-              <ActivityIndicator color={colors.black} />
-            ) : (
-              <Text style={styles.findButtonText}>{t('chooseRide.findOffers')}</Text>
-            )}
-          </Pressable>
-          <Pressable style={styles.filterPill}>
-            <Ionicons name="options-outline" size={18} color={colors.black} />
-          </Pressable>
+        <Pressable style={styles.optionsRow} onPress={() => setOptionsOpen(true)}>
+          <Ionicons name="people-outline" size={18} color={colors.black} />
+          <Text style={styles.optionsText}>{t('chooseRide.passengersOptions')}</Text>
+          {(extraPassengers || childSeat || comment) && (
+            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+          )}
+          <Ionicons name="chevron-forward" size={18} color={colors.gray400} />
+        </Pressable>
+
+        <View style={styles.autoAcceptRow}>
+          <Ionicons name="send" size={16} color={colors.primary} />
+          <Text style={styles.autoAcceptText}>{t('chooseRide.autoAcceptOffer', { fare: formatFare(fare) })}</Text>
+          <Switch value={autoAccept} onValueChange={setAutoAccept} />
         </View>
+
+        <Pressable
+          style={styles.findButton}
+          disabled={creating}
+          onPress={async () => {
+            const uid = auth.currentUser?.uid;
+            if (!uid) {
+              Alert.alert(t('chooseRide.pleaseSignInFirst'));
+              return;
+            }
+            if (!fare) {
+              Alert.alert(t('chooseRide.couldNotRequestRide'), t('chooseRide.calculatingRoute'));
+              return;
+            }
+            setCreating(true);
+            try {
+              const rideId = await createRideRequest({
+                riderId: uid,
+                riderName,
+                pickup,
+                destination,
+                rideTypeId: selected.id,
+                requestedFare: fare,
+                extraPassengers,
+                childSeat,
+                comment: comment || undefined,
+                zoneId: ZONE_ID,
+              });
+              navigation.navigate('SearchingOffers', {
+                rideId,
+                fare,
+                rideTypeName: rideTypeLabel(selected.id),
+                pickup,
+                destination,
+                minimumFare: minFareFor(selected),
+                autoAccept,
+              });
+            } catch (err: any) {
+              Alert.alert(t('chooseRide.couldNotRequestRide'), err.message ?? t('common.pleaseTryAgain'));
+            } finally {
+              setCreating(false);
+            }
+          }}
+        >
+          {creating ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.findButtonText}>{t('chooseRide.findOffers')}</Text>
+          )}
+        </Pressable>
       </SafeAreaView>
 
       <Modal visible={optionsOpen} animationType="slide" transparent>
@@ -289,7 +353,7 @@ export default function ChooseRideScreen({ navigation, route }: Props) {
           />
 
           <Pressable style={styles.closeButton} onPress={() => setOptionsOpen(false)}>
-            <Text style={typography.bodyBold}>{t('common.close')}</Text>
+            <Text style={[typography.bodyBold, { color: colors.white }]}>{t('common.close')}</Text>
           </Pressable>
         </View>
       </Modal>
@@ -340,25 +404,43 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   grabber: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.gray200, alignSelf: 'center', marginBottom: spacing.sm },
-  rideCard: { backgroundColor: colors.gray50, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm },
-  rideRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  rideMeta: { ...typography.caption, color: colors.gray600 },
-  rideDesc: { ...typography.caption, color: colors.gray600 },
-  fareStepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
-  stepperBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.gray200, alignItems: 'center', justifyContent: 'center' },
-  stepperBtnText: { fontSize: 22, fontWeight: '700' },
-  fareAmount: { ...typography.h2 },
+  tabsRow: { flexGrow: 0, marginBottom: spacing.md },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.gray50,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tabLabel: { ...typography.bodyBold },
+  tabLabelActive: { color: colors.white },
+  pricingCard: { backgroundColor: colors.gray50, borderRadius: radius.lg, padding: spacing.md },
+  fareHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: spacing.xs },
+  fareSubRow: { alignItems: 'flex-end' },
+  fareHint: { ...typography.caption, color: colors.gray600 },
+  fareHintValue: { ...typography.bodyBold, marginTop: 2 },
+  fareAmount: { ...typography.h1, marginTop: 2 },
   fareCaption: { ...typography.caption, color: colors.gray600 },
-  optionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.gray100 },
-  optionMeta: { ...typography.caption, color: colors.gray600 },
-  optionDesc: { ...typography.caption, color: colors.gray400 },
+  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.xs },
+  sliderLabel: { ...typography.caption, color: colors.gray600 },
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray100,
+  },
+  optionsText: { ...typography.body, flex: 1 },
   autoAcceptRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   autoAcceptText: { ...typography.body, flex: 1 },
-  ctaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  cashPill: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.gray100, alignItems: 'center', justifyContent: 'center' },
-  findButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 16, alignItems: 'center' },
-  findButtonText: { ...typography.h3 },
-  filterPill: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.gray100, alignItems: 'center', justifyContent: 'center' },
+  findButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 18, alignItems: 'center', marginTop: spacing.sm },
+  findButtonText: { ...typography.h3, color: colors.white },
   modalBackdrop: { flex: 1, backgroundColor: colors.overlay },
   modalSheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },

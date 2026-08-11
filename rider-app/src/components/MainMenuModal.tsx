@@ -10,10 +10,12 @@ export default function MainMenuModal({
   visible,
   onClose,
   onOpenTripHistory,
+  onOpenSettings,
 }: {
   visible: boolean;
   onClose: () => void;
   onOpenTripHistory: () => void;
+  onOpenSettings: () => void;
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -33,6 +35,16 @@ export default function MainMenuModal({
           >
             <Ionicons name="time-outline" size={20} color={colors.black} />
             <Text style={typography.body}>{t('tripHistory.title')}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.row}
+            onPress={() => {
+              onClose();
+              onOpenSettings();
+            }}
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.black} />
+            <Text style={typography.body}>{t('settings.title')}</Text>
           </Pressable>
           <Pressable style={styles.row} onPress={() => setLanguageOpen(true)}>
             <Ionicons name="language-outline" size={20} color={colors.black} />

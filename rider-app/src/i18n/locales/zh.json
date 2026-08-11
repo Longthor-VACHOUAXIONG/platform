@@ -47,16 +47,26 @@
   },
   "home": {
     "whereFrom": "出发地",
+    "whereTo": "目的地",
     "whereToPrompt": "去哪里，愿意出多少钱？",
+    "order": "叫车",
     "cityRides": "市内出行",
-    "couriers": "快递配送"
+    "couriers": "快递配送",
+    "rideTab": "经济型",
+    "electroTab": "电动车",
+    "motoTab": "摩托车",
+    "courierTab": "快递",
+    "comfortTab": "舒适型"
   },
   "setDestination": {
     "moveMapPrompt": "移动地图以设置目的地"
   },
   "chooseRide": {
-    "recommendedFare": "建议车费",
-    "findOffers": "寻找司机",
+    "recommendedFare": "建议价",
+    "setYourFare": "设置您的价格",
+    "yourPrice": "您的价格",
+    "passengersOptions": "乘客与选项",
+    "findOffers": "叫车",
     "autoAcceptOffer": "自动接受 {{fare}} 的报价",
     "options": "选项",
     "moreThan4Passengers": "超过4名乘客",
@@ -126,7 +136,15 @@
     "empty": "暂无已完成的行程。"
   },
   "settings": {
-    "language": "语言"
+    "title": "设置",
+    "language": "语言",
+    "rider": "乘客",
+    "helpSupport": "帮助与支持",
+    "termsPolicy": "条款与隐私政策",
+    "about": "关于",
+    "logout": "退出登录",
+    "logoutTitle": "退出登录",
+    "logoutConfirm": "确定要退出登录吗？"
   },
   "chat": {
     "messagePlaceholder": "输入消息…"

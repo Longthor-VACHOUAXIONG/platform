@@ -47,16 +47,26 @@
   },
   "home": {
     "whereFrom": "Where from",
+    "whereTo": "Where to",
     "whereToPrompt": "Where to & for how much?",
+    "order": "Order a ride",
     "cityRides": "City rides",
-    "couriers": "Couriers"
+    "couriers": "Couriers",
+    "rideTab": "Ride",
+    "electroTab": "Electro",
+    "motoTab": "Moto",
+    "courierTab": "Couriers",
+    "comfortTab": "Comfort"
   },
   "setDestination": {
     "moveMapPrompt": "Move the map to set your destination"
   },
   "chooseRide": {
-    "recommendedFare": "Recommended fare",
-    "findOffers": "Find offers",
+    "recommendedFare": "Recommended",
+    "setYourFare": "Set your fare",
+    "yourPrice": "Your price",
+    "passengersOptions": "Passengers & options",
+    "findOffers": "Order a ride",
     "autoAcceptOffer": "Auto-accept offer of {{fare}}",
     "options": "Options",
     "moreThan4Passengers": "More than 4 passengers",
@@ -127,7 +137,15 @@
     "empty": "No completed trips yet."
   },
   "settings": {
-    "language": "Language"
+    "title": "Settings",
+    "language": "Language",
+    "rider": "Rider",
+    "helpSupport": "Help & support",
+    "termsPolicy": "Terms & privacy policy",
+    "about": "About",
+    "logout": "Log out",
+    "logoutTitle": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?"
   },
   "chat": {
     "messagePlaceholder": "Type a message…"

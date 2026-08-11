@@ -13,6 +13,7 @@ import TripInProgressScreen from '../screens/TripInProgressScreen';
 import RateDriverScreen from '../screens/RateDriverScreen';
 import TripHistoryScreen from '../screens/TripHistoryScreen';
 import ChatScreen from '../screens/ChatScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 export type PlaceParam = { label: string; lat: number; lng: number };
 
@@ -20,13 +21,22 @@ export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
   Home: undefined;
-  SetDestination: { pickup: PlaceParam };
-  ChooseRide: { pickup: PlaceParam; destination: PlaceParam };
-  SearchingOffers: { rideId: string; fare: number; rideTypeName: string; pickup: PlaceParam; destination: PlaceParam };
+  SetDestination: { pickup: PlaceParam; initialRideTypeId?: string };
+  ChooseRide: { pickup: PlaceParam; destination: PlaceParam; initialRideTypeId?: string };
+  SearchingOffers: {
+    rideId: string;
+    fare: number;
+    rideTypeName: string;
+    pickup: PlaceParam;
+    destination: PlaceParam;
+    minimumFare: number;
+    autoAccept: boolean;
+  };
   ChooseDriver: { rideId: string };
   TripInProgress: { rideId: string; driverName: string; fare: number };
   RateDriver: { rideId: string; driverName: string };
   TripHistory: undefined;
+  Settings: undefined;
   Chat: { rideId: string; otherPartyName: string };
 };
 
@@ -46,6 +56,7 @@ export default function RootNavigator() {
         <Stack.Screen name="TripInProgress" component={TripInProgressScreen} />
         <Stack.Screen name="RateDriver" component={RateDriverScreen} />
         <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
       </Stack.Navigator>
     </NavigationContainer>

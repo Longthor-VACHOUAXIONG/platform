@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { formatFare } from '../utils/format';
-import { listenToOffers, acceptOffer, cancelRide, type RideOffer } from '../api/rideApi';
+import { listenToOffers, acceptOffer, declineOffer, cancelRide, type RideOffer } from '../api/rideApi';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -25,11 +25,13 @@ export default function ChooseDriverScreen({ navigation, route }: Props) {
     return unsub;
   }, [rideId]);
 
-  const decline = (driverId: string) => {
-    // Declining locally just hides the card; the driver's offer document
-    // stays 'pending' unless the rider accepts a different driver (which
-    // marks all others 'declined_by_rider' server-side).
+  const decline = async (driverId: string) => {
+    // Hides the card immediately and marks the offer declined server-side so
+    // it stops showing to the driver and won't reappear.
     setOffers((o) => o.filter((d) => d.driverId !== driverId));
+    declineOffer({ rideId, driverId }).catch((err) =>
+      console.warn('Failed to decline offer', err)
+    );
   };
 
   const accept = async (offer: RideOffer) => {
@@ -170,9 +172,9 @@ const styles = StyleSheet.create({
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.gray200 },
   actionRow: { flexDirection: 'row', gap: spacing.sm },
-  declineButton: { flex: 1, backgroundColor: colors.gray100, borderRadius: radius.pill, paddingVertical: 14, alignItems: 'center' },
+  declineButton: { flex: 1, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.gray200, borderRadius: radius.pill, paddingVertical: 14, alignItems: 'center' },
   acceptButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: 14, alignItems: 'center' },
-  acceptText: { ...typography.bodyBold },
+  acceptText: { ...typography.bodyBold, color: colors.white },
   confirmBackdrop: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'center', padding: spacing.lg },
   confirmSheet: { backgroundColor: colors.white, borderRadius: radius.lg, padding: spacing.lg },
   keepSearchingButton: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 16, alignItems: 'center', marginBottom: spacing.sm },

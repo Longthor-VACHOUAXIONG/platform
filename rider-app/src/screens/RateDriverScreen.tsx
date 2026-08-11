@@ -64,7 +64,11 @@ export default function RateDriverScreen({ navigation, route }: Props) {
           disabled={rating === 0 || submitting}
           onPress={submit}
         >
-          {submitting ? <ActivityIndicator color={colors.black} /> : <Text style={typography.bodyBold}>{t('rating.submit')}</Text>}
+          {submitting ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={[typography.bodyBold, { color: colors.white }]}>{t('rating.submit')}</Text>
+          )}
         </Pressable>
 
         <Pressable style={styles.skipButton} onPress={() => navigation.popToTop()}>

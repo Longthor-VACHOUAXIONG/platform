@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, Switch, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, Switch, Image, Alert, type DimensionValue } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import OsmMapView from '../components/OsmMapView';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography, shadow } from '../theme/theme';
 import { formatFare } from '../utils/format';
-import { listenToOffers, cancelRide } from '../api/rideApi';
-import { doc, updateDoc } from '@react-native-firebase/firestore';
-import { db } from '../api/firebaseConfig';
+import { listenToOffers, cancelRide, acceptOffer, updateRequestedFare } from '../api/rideApi';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -30,8 +28,9 @@ const CANCEL_REASON_KEYS = [
 export default function SearchingOffersScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { rideId, fare: initialFare, rideTypeName, pickup, destination } = route.params;
+  const { rideId, fare: initialFare, rideTypeName, pickup, destination, minimumFare, autoAccept: initialAutoAccept } = route.params;
   const [fare, setFare] = useState(initialFare);
+  const [autoAccept, setAutoAccept] = useState(initialAutoAccept);
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const [driversViewing, setDriversViewing] = useState(1);
   const [showRaisePrompt, setShowRaisePrompt] = useState(false);
@@ -61,9 +60,22 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
   useEffect(() => {
     startCountdown();
 
-    // Navigate to the driver-picker as soon as at least one real offer lands.
+    // Either navigate to the driver-picker (manual mode) or auto-accept the
+    // nearest offer as soon as one lands.
     const unsubOffers = listenToOffers(rideId, (offers) => {
-      if (offers.length > 0) {
+      if (offers.length === 0) return;
+      if (autoAccept) {
+        const nearest = [...offers].sort((a, b) => a.etaMinutes - b.etaMinutes)[0];
+        acceptOffer({ rideId, driverId: nearest.driverId })
+          .then(() => {
+            navigation.replace('TripInProgress', {
+              rideId,
+              driverName: nearest.driverName,
+              fare: nearest.offeredFare,
+            });
+          })
+          .catch(() => navigation.replace('ChooseDriver', { rideId }));
+      } else {
         navigation.replace('ChooseDriver', { rideId });
       }
     });
@@ -75,12 +87,14 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist a fare change back to the ride doc so drivers and the backend
-  // see the new requested fare (the rider owns this doc, so a client-side
-  // update is allowed by firestore.rules).
+  // Persist a fare change back to the ride doc through the `updateRequestedFare`
+  // callable, which re-validates the new fare against the stored minimum /
+  // recommended band server-side. The ride doc itself can no longer be updated
+  // directly from the client (firestore.rules allow admin-only updates).
   const updateFare = (next: number) => {
-    setFare(next);
-    updateDoc(doc(db, 'rideRequests', rideId), { requestedFare: next }).catch((err) =>
+    const clamped = Math.max(minimumFare, Math.round(next / FARE_STEP) * FARE_STEP);
+    setFare(clamped);
+    updateRequestedFare({ rideId, requestedFare: clamped }).catch((err) =>
       console.warn('Failed to persist raised fare', err)
     );
   };
@@ -122,11 +136,11 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
           <Text style={styles.timerValue}>0:{secondsLeft.toString().padStart(2, '0')}</Text>
         </View>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          <View style={[styles.progressFill, { width: `${progress * 100}%` as DimensionValue }]} />
         </View>
 
         <View style={styles.fareStepper}>
-          <Pressable style={styles.stepperBtn} onPress={() => updateFare(Math.max(FARE_STEP, fare - FARE_STEP))}>
+          <Pressable style={styles.stepperBtn} onPress={() => updateFare(fare - FARE_STEP)}>
             <Text style={styles.stepperBtnText}>−1,000</Text>
           </Pressable>
           <Text style={styles.fareAmount}>{formatFare(fare)}</Text>
@@ -140,11 +154,11 @@ export default function SearchingOffersScreen({ navigation, route }: Props) {
         </Pressable>
 
         <View style={styles.autoAcceptRow}>
-          <Ionicons name="send" size={16} color={colors.black} />
+          <Ionicons name="send" size={16} color={colors.primary} />
           <Text style={styles.autoAcceptText}>
             {t('searching.autoAcceptNearest', { fare: formatFare(fare) })}
           </Text>
-          <Switch value={false} />
+          <Switch value={autoAccept} onValueChange={setAutoAccept} />
         </View>
 
         <View style={styles.summaryCard}>
@@ -242,13 +256,13 @@ const styles = StyleSheet.create({
   grabber: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.gray200, alignSelf: 'center', marginBottom: spacing.sm },
   timerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   timerLabel: { ...typography.bodyBold, flex: 1, marginRight: spacing.sm },
-  timerValue: { ...typography.h3 },
-  progressTrack: { height: 4, backgroundColor: colors.gray100, borderRadius: 2, marginTop: spacing.sm, overflow: 'hidden' },
-  progressFill: { height: 4, backgroundColor: colors.black },
+  timerValue: { ...typography.h3, color: colors.primary },
+  progressTrack: { height: 6, backgroundColor: colors.gray100, borderRadius: 3, marginTop: spacing.sm, overflow: 'hidden' },
+  progressFill: { height: 6, backgroundColor: colors.primary },
   fareStepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
   stepperBtn: { backgroundColor: colors.gray100, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  stepperBtnText: { ...typography.bodyBold, color: colors.gray600 },
-  fareAmount: { ...typography.h2 },
+  stepperBtnText: { ...typography.bodyBold, color: colors.primary },
+  fareAmount: { ...typography.h1 },
   raiseButton: { backgroundColor: colors.gray100, borderRadius: radius.md, paddingVertical: 16, alignItems: 'center', marginTop: spacing.sm },
   raiseButtonText: { ...typography.bodyBold, color: colors.black },
   autoAcceptRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },

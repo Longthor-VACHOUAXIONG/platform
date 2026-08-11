@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logoText: {
-    color: colors.primary,
+    color: colors.white,
     fontSize: 44,
     fontWeight: '800',
   },

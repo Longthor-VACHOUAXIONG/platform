@@ -77,7 +77,7 @@ export default function ChatScreen({ navigation, route }: Props) {
             returnKeyType="send"
           />
           <Pressable style={styles.sendButton} onPress={send}>
-            <Ionicons name="send" size={18} color={colors.black} />
+            <Ionicons name="send" size={18} color={colors.white} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: '80%', borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   bubbleMine: { backgroundColor: colors.primary, alignSelf: 'flex-end' },
   bubbleTheirs: { backgroundColor: colors.gray100, alignSelf: 'flex-start' },
-  bubbleTextMine: { ...typography.body, color: colors.black },
+  bubbleTextMine: { ...typography.body, color: colors.white },
   bubbleTextTheirs: { ...typography.body, color: colors.black },
   inputRow: {
     flexDirection: 'row',

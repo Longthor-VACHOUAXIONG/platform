@@ -1,19 +1,19 @@
-// Central theme file — swap these to re-brand the entire app.
+// Central theme file — inDrive-inspired palette. Swap these to re-brand.
 export const colors = {
-  primary: '#B6F400',       // brand lime/green (swap for your brand color)
-  primaryDark: '#8FC400',
-  black: '#111111',
+  primary: '#2E5BFF',       // inDrive-style vivid blue
+  primaryDark: '#1A3FCC',
+  black: '#1C1C28',
   white: '#FFFFFF',
-  gray50: '#F7F7F8',
-  gray100: '#F0F0F1',
-  gray200: '#E4E4E6',
-  gray400: '#A0A0A6',
-  gray600: '#6B6B70',
-  gray800: '#2B2B2E',
-  danger: '#E5484D',
-  dangerBg: '#FBE4E4',
-  success: '#1E9E4B',
-  overlay: 'rgba(0,0,0,0.45)',
+  gray50: '#F4F6FA',        // app background
+  gray100: '#EEF0F5',
+  gray200: '#E2E2EA',
+  gray400: '#92929D',
+  gray600: '#5E5E66',
+  gray800: '#2B2B3A',
+  danger: '#FC5A5A',
+  dangerBg: '#FDEBEB',
+  success: '#1BC06E',
+  overlay: 'rgba(28,28,40,0.45)',
 };
 
 export const spacing = {
@@ -43,11 +43,11 @@ export const typography = {
 
 export const shadow = {
   card: {
-    shadowColor: '#000',
+    shadowColor: '#1C1C28',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    elevation: 5,
   },
 };
 

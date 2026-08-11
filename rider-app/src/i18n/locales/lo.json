@@ -47,16 +47,26 @@
   },
   "home": {
     "whereFrom": "ຈຸດຮັບ",
+    "whereTo": "ຈຸດໝາຍ",
     "whereToPrompt": "ໄປໃສ ແລະ ລາຄາເທົ່າໃດ?",
+    "order": "ສັ່ງລົດ",
     "cityRides": "ໂດຍສານໃນເມືອງ",
-    "couriers": "ບໍລິການສົ່ງເຄື່ອງ"
+    "couriers": "ບໍລິການສົ່ງເຄື່ອງ",
+    "rideTab": "ລົດທົ່ວໄປ",
+    "electroTab": "ລົດໄຟຟ້າ",
+    "motoTab": "ລົດຈັກ",
+    "courierTab": "ສົ່ງເຄື່ອງ",
+    "comfortTab": "ຄອມຟອດ"
   },
   "setDestination": {
     "moveMapPrompt": "ເລື່ອນແຜນທີ່ເພື່ອກຳນົດຈຸດໝາຍ"
   },
   "chooseRide": {
-    "recommendedFare": "ລາຄາທີ່ແນະນຳ",
-    "findOffers": "ຄົ້ນຫາຄົນຂັບ",
+    "recommendedFare": "ແນະນຳ",
+    "setYourFare": "ຕັ້ງລາຄາຂອງທ່ານ",
+    "yourPrice": "ລາຄາຂອງທ່ານ",
+    "passengersOptions": "ຜູ້ໂດຍສານ ແລະ ຕົວເລືອກ",
+    "findOffers": "ສັ່ງລົດ",
     "autoAcceptOffer": "ຮັບອັດຕະໂນມັດໃນລາຄາ {{fare}}",
     "options": "ຕົວເລືອກ",
     "moreThan4Passengers": "ຜູ້ໂດຍສານຫຼາຍກວ່າ 4 ຄົນ",
@@ -127,7 +137,15 @@
     "empty": "ຍັງບໍ່ມີການເດີນທາງທີ່ສຳເລັດ."
   },
   "settings": {
-    "language": "ພາສາ"
+    "title": "ການຕັ້ງຄ່າ",
+    "language": "ພາສາ",
+    "rider": "ຜູ້ໂດຍສານ",
+    "helpSupport": "ການຊ່ວຍເຫຼືອ ແລະ ສະໜັບສະໜູນ",
+    "termsPolicy": "ຂໍ້ກຳນົດ ແລະ ນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ",
+    "about": "ກ່ຽວກັບ",
+    "logout": "ອອກຈາກລະບົບ",
+    "logoutTitle": "ອອກຈາກລະບົບ",
+    "logoutConfirm": "ທ່ານແນ່ໃຈບໍວ່າຕ້ອງການອອກຈາກລະບົບ?"
   },
   "chat": {
     "messagePlaceholder": "ພິມຂໍ້ຄວາມ…"

@@ -6,14 +6,16 @@ import { db } from '../lib/firebaseConfig';
 type Zone = {
   id: string;
   zoneName: string;
-  baseFarePerKm: { ride: number; electro: number; moto: number; comfort: number };
+  baseFarePerKm: { ride: number; electro: number; moto: number; comfort: number; courier: number };
   minimumFare: number;
   currency: string;
 };
 
+const RIDE_TYPES = ['ride', 'electro', 'moto', 'comfort', 'courier'] as const;
+
 const EMPTY_ZONE: Omit<Zone, 'id'> = {
   zoneName: '',
-  baseFarePerKm: { ride: 3000, electro: 3800, moto: 1800, comfort: 3500 },
+  baseFarePerKm: { ride: 3000, electro: 3800, moto: 1800, comfort: 3500, courier: 4000 },
   minimumFare: 10000,
   currency: 'LAK',
 };
@@ -93,7 +95,7 @@ export default function PricingPage() {
               onChange={(e) => updateZone(zone.id, { minimumFare: Number(e.target.value) })}
             />
 
-            {(['ride', 'electro', 'moto', 'comfort'] as const).map((key) => (
+            {RIDE_TYPES.map((key) => (
               <div key={key}>
                 <label>{t('pricing.perKm', { rideType: key })}</label>
                 <input
